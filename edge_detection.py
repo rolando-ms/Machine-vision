@@ -17,8 +17,8 @@ pixels3 = img3.load()
 
 # Converting from RGB to GS
 mod.rgb_to_gs(pixels, pixels2, height, width)
-img2.show()
-'''
+#img2.show()
+
 # Applying sobel masks that minimizes angle errors according to:
 # "Procesamiento digital de imagenes con MATLAB y Simulink"
 # ISBN: 978-607-707-030-6
@@ -28,77 +28,72 @@ sobelx = np.array([[-3.0,0.0,3.0]
 sobely = np.array([[-3.0,-10.0,-3.0]
 					,[0.0,0.0,0.0]
 					,[3.0,10.0,3.0]])
-begin, end = -1, 2
+#begin, end = -1, 2
 magnitudes = np.zeros((width,height), dtype = float)
 angles = np.zeros((width,height), dtype = float)
 
-for x in range(height): # Rows
-	for y in range(width):	# Columns
-		counter = 0
-		filterx = 0.0
-		filtery = 0.0
+for y in range(height): # Rows
+	for x in range(width):	# Columns
+		#filterx = 0.0
+		#filtery = 0.0
 		
+		filterx, filtery = mod.apply_edge_mask(pixels2, height, 
+		width, y, x, sobelx, sobely)
+		
+		'''
 		for a in range(begin, end):
 			for b in range(begin, end):
 				# First row and first column
-				if x == 0 and y == 0 and a >= 0 and b >= 0:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1
+				if y == 0 and x == 0 and a >= 0 and b >= 0:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
 				# First row and any column in between
-				elif x == 0 and y > 0 and y < width and b >= 0 and (y + a) < width:	
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1
+				elif y == 0 and x > 0 and x < width and b >= 0 and (x + a) < width:	
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
 				# First row and last column
-				elif x == 0 and y == width and a <= 0 and b >= 0:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1
+				elif y == 0 and x == width and a <= 0 and b >= 0:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
 				# Any row in between and first column
-				elif x > 0 and x < height and y == 0 and a >= 0 and (x + b) < height:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1		
+				elif y > 0 and y < height and x == 0 and a >= 0 and (y + b) < height:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])		
 				# Any row in between any column in between
-				elif x > 0 and x < height and y > 0 and y < width and (y + a) < width and (x + b) < height:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1	
+				elif y > 0 and y < height and x > 0 and x < width and (x + a) < width and (y + b) < height:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])	
 				# Any row in between and last column
-				elif x > 0 and x < height and y == width and a <= 0:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1
+				elif y > 0 and y < height and x == width and a <= 0:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
 				# Last row and first column
-				elif x == height and y == 0 and a >= 0 and b <= 0:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1		
+				elif y == height and x == 0 and a >= 0 and b <= 0:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])		
 				# Last row and any column in between
-				elif x == height and y > 0 and y <= width and b <= 0 and (y + a) < width:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1	
+				elif y == height and x > 0 and x <= width and b <= 0 and (x + a) < width:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])	
 				# Last row and last column
-				elif x == height-1 and y == width-1 and a <= 0 and b <= 0:
-					filterx += (pixels2[y+a,x+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[y+a,x+b] * sobely[a+1,b+1])
-					counter += 1
+				elif y == height-1 and x == width-1 and a <= 0 and b <= 0:
+					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
+					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
+					'''
 						
 		Xpow = pow(filterx, 2)
 		Ypow = pow(filtery, 2)
-		magnitudes[y,x] = math.sqrt(Xpow + Ypow)
-		angles[y,x] = math.atan2(filtery, filterx)
+		magnitudes[x,y] = math.sqrt(Xpow + Ypow)
+		angles[x,y] = math.atan2(filtery, filterx)
 		if x == 0 and y == 0:
-			min = magnitudes[y,x]
-			max = magnitudes[y,x]
+			min = magnitudes[x,y]
+			max = magnitudes[x,y]
 		else:
-			if magnitudes[y,x] < min:
-				min = magnitudes[y,x]
+			if magnitudes[x,y] < min:
+				min = magnitudes[x,y]
 			
-			if magnitudes[y,x] > max:
-				max = magnitudes[y,x]
+			if magnitudes[x,y] > max:
+				max = magnitudes[x,y]
 				
 
 # Creating list for histogram
@@ -160,7 +155,7 @@ for x in range(height):	#Rows
 n, bins, patches = plt.hist(values, 50, facecolor = 'g')
 #plt.show()	
 
-'''
+
 
 '''
 # Plotting edges
@@ -174,6 +169,6 @@ for x in range(height):
 			
 '''
 
-#img.show()
-#plt.show()
+img.show()
+plt.show()
 
