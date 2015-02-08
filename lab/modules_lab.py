@@ -9,7 +9,8 @@ def rgb_to_gs(original, new, imheight, imwidth):
 	#data1 = pixels from original image, data 2 = pixels of new image
 	for y in range(imheight):
 		for x in range(imwidth):
-			new[y,x] = ((original[y,x][0] * 0.21) +
-			(original[y,x][1] * 0.72) + (original[y,x][2] * 0.07))
+			print 'x = %d , y = %d' %(x,y)
+			new[x,y] = ((original[x,y][0] * 0.21) +
+			(original[x,y][1] * 0.72) + (original[x,y][2] * 0.07))
 			
 	return new

@@ -16,9 +16,9 @@ img3 = Image.new('L', (width,height), 'black')
 pixels3 = img3.load()
 
 # Converting from RGB to GS
-mod.rgb_to_gs(pixels, pixels2, width, height)
-#img2.show()
-
+mod.rgb_to_gs(pixels, pixels2, height, width)
+img2.show()
+'''
 # Applying sobel masks that minimizes angle errors according to:
 # "Procesamiento digital de imagenes con MATLAB y Simulink"
 # ISBN: 978-607-707-030-6
@@ -160,7 +160,7 @@ for x in range(height):	#Rows
 n, bins, patches = plt.hist(values, 50, facecolor = 'g')
 #plt.show()	
 
-
+'''
 
 '''
 # Plotting edges
@@ -174,6 +174,6 @@ for x in range(height):
 			
 '''
 
-img.show()
-plt.show()
+#img.show()
+#plt.show()
 
