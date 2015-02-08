@@ -1,2 +1,2 @@
-# Machine vision (jan-jun 15)
+# Machine vision
 Repository of the Machine vision lecture + Lab (1535382)
