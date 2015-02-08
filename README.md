@@ -1,2 +1,2 @@
-# vision-computacional-ene-jun15-1535382
+# Machine vision (ene-jun 15)
 Repository of the Machine vision lecture + Lab (1535382)
