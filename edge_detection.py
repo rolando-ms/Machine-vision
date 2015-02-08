@@ -1,3 +1,4 @@
+from lab import modules_lab as mod # Here I have my lab modules
 from PIL import Image
 import math
 import numpy as np
@@ -12,6 +13,9 @@ pixels2 = img2.load()
 img3 = Image.new('L', (img.size[0],img.size[1]), 'black')
 pixels3 = img3.load()
 
+mod.rgb_to_gs(pixels, pixels2, img.size[0], img2.size[1])
+img2.show()
+'''
 # Color to gray
 for x in range(img.size[1]): # Rows
 	for y in range(img.size[0]): # Columns
@@ -157,6 +161,8 @@ for x in range(img.size[1]):	#Rows
 n, bins, patches = plt.hist(values, 50, facecolor = 'g')
 #plt.show()	
 
+
+'''
 '''
 # Plotting edges
 print 'Choose cut limit:'
@@ -166,6 +172,9 @@ for x in range(img.size[1]):
 	for y in range(img.size[0]):
 		if magnitudes[y,x] > limit:
 			pixels[y,x] = (0,255,0)
-			'''
-img.show()
-plt.show()
+			
+'''
+
+#img.show()
+#plt.show()
+
