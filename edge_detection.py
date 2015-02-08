@@ -13,17 +13,9 @@ pixels2 = img2.load()
 img3 = Image.new('L', (img.size[0],img.size[1]), 'black')
 pixels3 = img3.load()
 
+# Converting from RGB to GS
 mod.rgb_to_gs(pixels, pixels2, img.size[0], img2.size[1])
-img2.show()
-'''
-# Color to gray
-for x in range(img.size[1]): # Rows
-	for y in range(img.size[0]): # Columns
-		#print 'x = %d , y = %d' %(x,y)
-		pixels2[y,x] = ((pixels[y,x][0] * 0.21) + 
-		(pixels[y,x][1] * 0.72) + (pixels[y,x][2] * 0.07))
-
-#im2.show()
+#img2.show()
 
 # Applying masks
 # Sobel
@@ -162,7 +154,7 @@ n, bins, patches = plt.hist(values, 50, facecolor = 'g')
 #plt.show()	
 
 
-'''
+
 '''
 # Plotting edges
 print 'Choose cut limit:'
@@ -175,6 +167,6 @@ for x in range(img.size[1]):
 			
 '''
 
-#img.show()
-#plt.show()
+img.show()
+plt.show()
 
