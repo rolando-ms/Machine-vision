@@ -41,10 +41,13 @@ for y in range(height): # Rows
 		filterx, filtery = modlec.apply_edge_mask(pixels2, height, 
 		width, y, x, sobelx, sobely)
 						
-		Xpow = pow(filterx, 2)
-		Ypow = pow(filtery, 2)
-		magnitudes[x,y] = math.sqrt(Xpow + Ypow)
+		# Calculating magnitude with euclidean distance
+		magnitudes[x,y] = modlec.euclidean_dist(filterx, filtery)
+		
+		# Calculating angle from components
 		angles[x,y] = math.atan2(filtery, filterx)
+		
+		# Saving min and max magnitude values
 		if x == 0 and y == 0:
 			min = magnitudes[x,y]
 			max = magnitudes[x,y]

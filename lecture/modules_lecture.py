@@ -1,3 +1,5 @@
+import math
+
 #************************
 # Apply edge mask module
 #************************
@@ -52,3 +54,16 @@ maskx, masky):
 				y_component += (image[xcoordinate+a,ycoordinate+b] * masky[a+1,b+1])
 				
 	return(x_component, y_component)
+	
+
+#***************************
+# Euclidean distance module	
+#***************************
+# Given two int magnitudes, this module returns the euclidean distance
+# from them.
+
+def euclidean_dist(xval, yval):
+	xpow = pow(xval, 2)
+	ypow = pow(yval, 2)
+	magnitude = math.sqrt(xpow + ypow)
+	return magnitude
