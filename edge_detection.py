@@ -95,13 +95,16 @@ for z in range(int(bins)):
 	if histogram[z][1] > max2_hist and histogram[z][1] < max_hist:
 		max2_hist = histogram[z][1]
 
-img3.show()
-#print histogram , max_hist , max2_hist
+# Normalized magnitudes of gradients
+#img3.show()
 
-# Printing pixels into result image
+
+# Printing pixels into result image. It takes the biggest bin and 
+# chooses whether a bin is an edge or not.
 for y in range(height):
 	for x in range(width):
 		for z in range(int(bins)):
+			# If the biggest has more than 70% of the pixels
 			if max_hist > ((height * width) * 0.7):
 				if magnitudes[x,y] >= histogram[z][0] and histogram[z][1] < (max2_hist * 0.20):
 					resultpix[x,y] = (255, 255, 0)
@@ -109,12 +112,13 @@ for y in range(height):
 			else:
 				if histogram[z][1] < (max_hist * 0.20):
 					if magnitudes[x,y] >= histogram[z][0]:
-						#print histogram[z][1], max_hist*0.1
 						resultpix[x,y] = (0, 255, 255)
 						break
 
-
+# Printing the result image
 result.show()
+# To save the image into HDD, uncomment next line.
+#result.save('edges.png')
 
 '''
 # Plotting histogram
