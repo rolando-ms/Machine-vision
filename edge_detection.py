@@ -1,4 +1,5 @@
-from lab import modules_lab as mod # Here I have my lab modules
+from lab import modules_lab as modlab # Here I have my lab modules
+from lecture import modules_lecture as modlec # Here I have my lecture modules
 from PIL import Image
 import math
 import numpy as np
@@ -16,10 +17,10 @@ img3 = Image.new('L', (width,height), 'black')
 pixels3 = img3.load()
 
 # Converting from RGB to GS
-mod.rgb_to_gs(pixels, pixels2, height, width)
+modlab.rgb_to_gs(pixels, pixels2, height, width)
 #img2.show()
 
-# Applying sobel masks that minimizes angle errors according to:
+# Using sobel masks that minimizes angle errors according to:
 # "Procesamiento digital de imagenes con MATLAB y Simulink"
 # ISBN: 978-607-707-030-6
 sobelx = np.array([[-3.0,0.0,3.0]
@@ -28,58 +29,17 @@ sobelx = np.array([[-3.0,0.0,3.0]
 sobely = np.array([[-3.0,-10.0,-3.0]
 					,[0.0,0.0,0.0]
 					,[3.0,10.0,3.0]])
-#begin, end = -1, 2
+
+# Creating zeros matrices to store values
 magnitudes = np.zeros((width,height), dtype = float)
 angles = np.zeros((width,height), dtype = float)
 
 for y in range(height): # Rows
 	for x in range(width):	# Columns
-		#filterx = 0.0
-		#filtery = 0.0
 		
-		filterx, filtery = mod.apply_edge_mask(pixels2, height, 
+		# Discrete convolution to a pixel
+		filterx, filtery = modlec.apply_edge_mask(pixels2, height, 
 		width, y, x, sobelx, sobely)
-		
-		'''
-		for a in range(begin, end):
-			for b in range(begin, end):
-				# First row and first column
-				if y == 0 and x == 0 and a >= 0 and b >= 0:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
-				# First row and any column in between
-				elif y == 0 and x > 0 and x < width and b >= 0 and (x + a) < width:	
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
-				# First row and last column
-				elif y == 0 and x == width and a <= 0 and b >= 0:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
-				# Any row in between and first column
-				elif y > 0 and y < height and x == 0 and a >= 0 and (y + b) < height:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])		
-				# Any row in between any column in between
-				elif y > 0 and y < height and x > 0 and x < width and (x + a) < width and (y + b) < height:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])	
-				# Any row in between and last column
-				elif y > 0 and y < height and x == width and a <= 0:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
-				# Last row and first column
-				elif y == height and x == 0 and a >= 0 and b <= 0:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])		
-				# Last row and any column in between
-				elif y == height and x > 0 and x <= width and b <= 0 and (x + a) < width:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])	
-				# Last row and last column
-				elif y == height-1 and x == width-1 and a <= 0 and b <= 0:
-					filterx += (pixels2[x+a,y+b] * sobelx[a+1,b+1])
-					filtery += (pixels2[x+a,y+b] * sobely[a+1,b+1])
-					'''
 						
 		Xpow = pow(filterx, 2)
 		Ypow = pow(filtery, 2)
