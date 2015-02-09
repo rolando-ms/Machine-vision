@@ -5,16 +5,23 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-img = Image.open('coins.png')
+# Opening target image
+img = Image.open('circles_mini.png')
 pixels = img.load()
 
+# Saving resolution into variables
 width, height = img.size
 
+# Creating new GS images to store new pixels values in them
 img2 = Image.new('L', (width,height), "black")
 pixels2 = img2.load()
 
 img3 = Image.new('L', (width,height), 'black')
 pixels3 = img3.load()
+
+# Creating result image
+result = img
+resultpix = result.load()
 
 # Converting from RGB to GS
 modlab.rgb_to_gs(pixels, pixels2, height, width)
@@ -91,22 +98,25 @@ for z in range(int(bins)):
 img3.show()
 #print histogram , max_hist , max2_hist
 
-# Histogram	
-for x in range(height):
-	for y in range(width):
+# Printing pixels into result image
+for y in range(height):
+	for x in range(width):
 		for z in range(int(bins)):
 			if max_hist > ((height * width) * 0.7):
-				if magnitudes[y,x] >= histogram[z][0] and histogram[z][1] < (max2_hist * 0.20):
-					pixels[y,x] = (255, 255, 0)
+				if magnitudes[x,y] >= histogram[z][0] and histogram[z][1] < (max2_hist * 0.20):
+					resultpix[x,y] = (255, 255, 0)
 					break
 			else:
 				if histogram[z][1] < (max_hist * 0.20):
-					if magnitudes[y,x] >= histogram[z][0]:
+					if magnitudes[x,y] >= histogram[z][0]:
 						#print histogram[z][1], max_hist*0.1
-						pixels[y,x] = (0, 255, 255)
+						resultpix[x,y] = (0, 255, 255)
 						break
 
 
+result.show()
+
+'''
 # Plotting histogram
 values = np.zeros(1,int)
 
@@ -116,22 +126,8 @@ for x in range(height):	#Rows
 		
 
 n, bins, patches = plt.hist(values, 50, facecolor = 'g')
-#plt.show()	
 
-
-
-'''
-# Plotting edges
-print 'Choose cut limit:'
-limit = int(raw_input('> '))
-
-for x in range(height):
-	for y in range(width):
-		if magnitudes[y,x] > limit:
-			pixels[y,x] = (0,255,0)
-			
-'''
-
-img.show()
 plt.show()
+'''
+
 
