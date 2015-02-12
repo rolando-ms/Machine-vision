@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Opening target image
-img = Image.open('circles_mini.png')
+img = Image.open('coins.png')
 pixels = img.load()
 
 # Saving resolution into variables
@@ -118,7 +118,7 @@ for y in range(height):
 # Printing the result image
 result.show()
 # To save the image into HDD, uncomment next line.
-#result.save('edges.png')
+result.save('1_edges_circles_mini.png')
 
 '''
 # Plotting histogram
