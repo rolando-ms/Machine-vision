@@ -54,6 +54,36 @@ maskx, masky):
 				y_component += (image[xcoordinate + a,ycoordinate + b] * masky[a + 1,b + 1])
 				
 	return(x_component, y_component)
+	
+def edge_gs_one(image, xcoordinate, ycoordinate, imheight, imwidth, maskx, masky):
+	# Initializing variables
+	x_component, y_component = 0, 0
+	
+	# Assigning the size of the mask
+	row = maskx.shape[0]
+	column = maskx.shape[1]
+	
+	# Assigning ranges of for loops according to the size of the mask
+	begin_row = (row/2) * -1
+	begin_col = (column/2) * -1
+	if (row % 2) == 0:	# If it is even
+		end_row = row / 2
+	else:				# If it is odd
+		end_row = (row / 2) + 1
+		
+	if (column % 2) == 0:
+		end_column = column / 2
+	else:
+		end_column = (column / 2) + 1
+	
+	# Convolution
+	for a in range(begin_row, end_row):
+		for b in range(begin_col, end_column):
+			if (xcoordinate + a) >= 0 and (xcoordinate + a) < imwidth and (ycoordinate + b) >= 0 and (ycoordinate + b) < imheight:
+				x_component += (image[xcoordinate + a,ycoordinate + b] * maskx[a + (column / 2),b + (row / 2)])
+				y_component += (image[xcoordinate + a,ycoordinate + b] * masky[a + (column / 2),b + (row / 2)])
+			
+	return (x_component, y_component)
 
 	
 #*****************************************
@@ -140,7 +170,7 @@ def convolution_gs_onepixel(image, mask, xcoordinate, ycoordinate, imheight, imw
 			#print 'column/2 = %d , row/2 = %d' %(column/2 + a,row/2 + b)
 			if (xcoordinate + a) >= 0 and (xcoordinate + a) < imwidth and (ycoordinate + b) >= 0 and (ycoordinate + b) < imheight:
 				#print "mask = %d , number = %d" %(mask[a + (column / 2),b + (row / 2)], number)
-				cumulative += (image[xcoordinate + a,ycoordinate + b][0] * mask[a + (column / 2),b + (row / 2)])
+				cumulative += (image[xcoordinate + a,ycoordinate + b] * mask[a + (column / 2),b + (row / 2)])
 				# Quantity to normalize cumulative values.
 				# It is the sum of all digits used in the convolution.
 				number += mask[a + (column / 2),b + (row / 2)]

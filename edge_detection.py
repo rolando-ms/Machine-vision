@@ -45,8 +45,8 @@ for y in range(height): # Rows
 	for x in range(width):	# Columns
 		
 		# Discrete convolution to a pixel
-		filterx, filtery = modlec.apply_edge_mask(pixels2, height, 
-		width, y, x, sobelx, sobely)
+		filterx, filtery = modlec.edge_gs_one(pixels2, x, y, height, 
+		width, sobelx, sobely)
 						
 		# Calculating magnitude with euclidean distance
 		magnitudes[x,y] = modlec.euclidean_dist(filterx, filtery)
@@ -118,7 +118,7 @@ for y in range(height):
 # Printing the result image
 result.show()
 # To save the image into HDD, uncomment next line.
-result.save('1_edges_circles_mini.png')
+#result.save('1_edges_circles_mini.png')
 
 '''
 # Plotting histogram
