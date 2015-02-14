@@ -137,22 +137,45 @@ def euclidean_dist(xval, yval):
 	magnitude = math.sqrt(xpow + ypow)
 	return magnitude
 	
+#**********************************
+# Normalization of edge magnitudes
+#**********************************
+# Given an image and it's max and min values, this module returns an 
+# image with normalized values (0-255)
+
+def normalize_edge(magnitude, image_pix, imheight, imwidth, mini, maxi):
+	#image = Image.new('L', (width,height), 'black')
+	#image_pix = image.load()
+	#imheight, imwidth = image.size[1], image.size[0]
+	for y in range(imheight):
+		for x in range(imwidth):
+			image_pix[x,y] = (magnitude[x,y] - mini) * (255 / maxi)
+			magnitude[x,y] = image_pix[x,y]
+	
+	return magnitude, image_pix
+			
+	
+	
 #******************
 # Histogram module
 #******************
 # This module creates a histogram for a grey image and initializes 
 # it's values.
 
-def histogram(hist_len, image, imheight, imwidth):
+def create_histogram(hist_len, image, imheight, imwidth):
 	# Creating histogram
-	histogram = [0] * 256
+	histogram = [0] * hist_len
 	
 	# Incrementing histogram values reading pixel values
 	for y in range(imheight):
 		for x in range(imwidth):
 			value = image[x,y]
 			histogram[value] += 1 
-	print histogram
+	#print histogram
+	
+	return histogram
+
+def reduce_histogram(histogram):
 	# Initializing a routine to find zeros in the histogram and, if so,
 	# joining pairs of values to create bins until no zero is found or
 	# the histogram has a length of 2.
@@ -166,7 +189,7 @@ def histogram(hist_len, image, imheight, imwidth):
 			break
 		# Looking for zeros
 		for z in range(len(histogram)):
-			print z, len(histogram)
+			#print z, len(histogram)
 			if histogram[z] == 0:
 				reduce = 1
 				break
@@ -187,6 +210,6 @@ def histogram(hist_len, image, imheight, imwidth):
 				else:
 					histogram.pop()
 		
-		print histogram
+		#print histogram
 		
 	return histogram

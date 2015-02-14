@@ -16,9 +16,6 @@ width, height = img.size
 img2 = Image.new('L', (width,height), "black")
 pixels2 = img2.load()
 
-img3 = Image.new('L', (width,height), 'black')
-pixels3 = img3.load()
-
 # Creating result image
 result = img
 resultpix = result.load()
@@ -65,8 +62,15 @@ for y in range(height): # Rows
 			if magnitudes[x,y] > max:
 				max = magnitudes[x,y]
 
-histo = modlec.histogram(256, pixels2, height, width)
+
+img3 = Image.new('L', (width,height), 'black')
+pixels3 = img3.load()
+magnitudes, pixels3 = modlec.normalize_edge(magnitudes, pixels3, height, width, min, max)
+img3.show()
+histo = modlec.create_histogram(256, pixels2, height, width)
 print histo
+histogram_bin = modlec.reduce_histogram(histo)
+print histogram_bin
 '''
 # Creating list for histogram
 histogram = []
