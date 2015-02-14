@@ -64,8 +64,10 @@ for y in range(height): # Rows
 			
 			if magnitudes[x,y] > max:
 				max = magnitudes[x,y]
-				
 
+histo = modlec.histogram(256, pixels2, height, width)
+print histo
+'''
 # Creating list for histogram
 histogram = []
 bins = 50.0
@@ -119,6 +121,7 @@ for y in range(height):
 result.show()
 # To save the image into HDD, uncomment next line.
 #result.save('1_edges_circles_mini.png')
+'''
 
 '''
 # Plotting histogram

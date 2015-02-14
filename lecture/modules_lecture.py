@@ -136,3 +136,57 @@ def euclidean_dist(xval, yval):
 	ypow = pow(yval, 2)
 	magnitude = math.sqrt(xpow + ypow)
 	return magnitude
+	
+#******************
+# Histogram module
+#******************
+# This module creates a histogram for a grey image and initializes 
+# it's values.
+
+def histogram(hist_len, image, imheight, imwidth):
+	# Creating histogram
+	histogram = [0] * 256
+	
+	# Incrementing histogram values reading pixel values
+	for y in range(imheight):
+		for x in range(imwidth):
+			value = image[x,y]
+			histogram[value] += 1 
+	print histogram
+	# Initializing a routine to find zeros in the histogram and, if so,
+	# joining pairs of values to create bins until no zero is found or
+	# the histogram has a length of 2.
+	
+	reduce, exit = 0, 0
+	while(exit == 0):
+		# If histogram has a length of 2 ==> exit
+		#(No more reductions allowed)
+		if len(histogram) == 2:
+			#exit == 1
+			break
+		# Looking for zeros
+		for z in range(len(histogram)):
+			print z, len(histogram)
+			if histogram[z] == 0:
+				reduce = 1
+				break
+			if histogram[z] != 0 and z == len(histogram) - 1:
+				exit = 1
+		
+		# Reducing histogram by pairing couples of values and popping
+		if reduce == 1:
+			reduce = 0; # Reduce variable reset
+			a, b = 0, 1 # Initializing variables
+			for w in range(len(histogram)):
+				# Pairing couples
+				if w < (len(histogram) / 2):
+					histogram[w] = histogram[a] + histogram[b]
+					a += 2
+					b += 2
+				# Popping values
+				else:
+					histogram.pop()
+		
+		print histogram
+		
+	return histogram
