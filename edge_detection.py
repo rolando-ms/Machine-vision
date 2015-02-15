@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Opening target image
-img = Image.open('Lenna_thumb.jpeg')
+img = Image.open('circles_mini.png')
 pixels = img.load()
 
 # Saving resolution into variables
