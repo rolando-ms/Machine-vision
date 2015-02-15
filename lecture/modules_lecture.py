@@ -1,4 +1,5 @@
 import math
+from PIL import Image
 
 #************************
 # Apply edge mask module
@@ -175,22 +176,34 @@ def create_histogram(hist_len, image, imheight, imwidth):
 	
 	return histogram
 
-def reduce_histogram(histogram):
+def reduce_histogram(histogram, imheight, imwidth):
 	# Initializing a routine to find zeros in the histogram and, if so,
 	# joining pairs of values to create bins until no zero is found or
-	# the histogram has a length of 2.
+	# till the histogram has a length of 2. If no zero is found but the 
+	# histogram has more than 8 bins, it is reduced to 8. If a color
+	# is very discriminative, the histogram isn't reduced.
+	resolution = imheight * imwidth
 	
-	reduce, exit = 0, 0
+	# Avoid reduction if a color is very discriminative
+	for x in range(len(histogram)):
+		if histogram[x] > int(resolution * 0.7):
+			exit = 1
+			break
+		else:
+			exit = 0
+	
+	# Reducing histogram
+	reduce = 0
 	while(exit == 0):
 		# If histogram has a length of 2 ==> exit
 		#(No more reductions allowed)
 		if len(histogram) == 2:
-			#exit == 1
 			break
+		
 		# Looking for zeros
 		for z in range(len(histogram)):
 			#print z, len(histogram)
-			if histogram[z] == 0:
+			if histogram[z] == 0 or len(histogram) > 8:
 				reduce = 1
 				break
 			if histogram[z] != 0 and z == len(histogram) - 1:
@@ -213,3 +226,35 @@ def reduce_histogram(histogram):
 		#print histogram
 		
 	return histogram
+	
+#********************
+# Choose edges module
+#********************
+# Given a previously processed histogram, this module decide whether 
+# or not a pixel is an edge. Here are the decision rules:
+# * If a color is very discriminative (if it has more than 70% of 
+# 	all pixels, you can decide how much is discriminative for you)
+#	the bins from the current one are edges.
+# * If a value of the next bin is smaller than the current one, the
+# 	next bins are edges.
+# * If the previous conditions are not TRUE, it considers edge the 
+#	pixels from the half till the end.
+
+def chose_edges(hist, magnitude, image, imheight, imwidth):
+	resolution = imheight * imwidth
+	counter = 0 # Counters the position of a bin
+	for x in range(len(hist)):
+		counter +=1
+		# Decision rules (as stated before)
+		if hist[x] > int(resolution * 0.7) or hist[x] > hist[x + 1] or x >= len(hist) / 2:
+			break
+	
+	# Giving 255 to a pixel that meets the requirements
+	for y in range(imheight):
+		for x in range(imwidth):
+			if magnitude[x,y] > ((255 / len(hist)) * counter) and x > 0 and x < imwidth-1 and y > 0 and y < imheight-1:
+				image[x,y] = 255
+				
+	return image  
+			
+	
