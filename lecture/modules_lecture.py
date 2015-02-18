@@ -258,3 +258,8 @@ def chose_edges(hist, magnitude, image, imheight, imwidth):
 	return image  
 			
 	
+'''	
+def object_dfs():
+
+	
+'''

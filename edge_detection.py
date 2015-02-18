@@ -70,7 +70,7 @@ def edge_detection(original, original_pix):
 
 	# Normalizing magnitudes
 	magnitudes, normalized_pix = modlec.normalize_edge(magnitudes, normalized_pix, height, width, min, max)
-	normalized.show()
+	#normalized.show()
 
 	# Creating histogram
 	histo = modlec.create_histogram(256, gray_pix, height, width)
@@ -86,14 +86,14 @@ def edge_detection(original, original_pix):
 
 	# Choosing edges
 	edges_pix = modlec.chose_edges(histogram_bin, magnitudes, edges_pix, height, width)	
-	edges.show()
+	#edges.show()
 
 	# Printing edges on result image
 	for y in range(height):
 		for x in range(width):
 			if edges_pix[x,y] > 0:
 				resultpix[x,y] = (255,255,0)
-	result.show()
+	#result.show()
 	
 	return magnitudes, angles, edges
 
