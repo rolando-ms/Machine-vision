@@ -19,9 +19,10 @@ pixels2 = im2.load()
 
 #magnitude, angle, edge = edge_detection(img, pixels)
 #edge.show()
+#edge_pix = edge.load()
 #edge.save('edge.png')
 
-objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, average x, average y]]
+objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, cumulative x, cumulative y]]
 labels = np.zeros((width,height), dtype = int)
 label = 0
 counter = 0
@@ -37,13 +38,13 @@ for y in range(height):
 		while len(stack) > 0:
 
 			if len(objects) == 0:
-				objects.append([pixels[x,y],[x,x,y,y],1,0,0])
+				objects.append([pixels[x,y],[x,x,y,y],0,x,y])
 				c, d = x, y
 				dfs = 1
 				label += 1
 			elif labels[x,y] != label and edge_pix[x,y] != 255 and \
 				labels[x,y] == 0:
-				objects.append([pixels[x,y],[x,x,y,y],1,0,0])
+				objects.append([pixels[x,y],[x,x,y,y],0,x,y])
 				c, d = x, y
 				dfs = 1
 				label += 1
@@ -58,6 +59,20 @@ for y in range(height):
 			#print objects
 			while dfs == 1 and len(stack) > 0:
 				labels[c, d] = label
+				objects[label - 1][2] += 1
+				objects[label - 1][3] = objects[label - 1][3] + c
+				objects[label - 1][4] = objects[label - 1][4] + d
+				
+				# min and max
+				if c < objects[label - 1][1][0]:
+					objects[label - 1][1][0] = c
+				if c > objects[label - 1][1][1]:
+					objects[label - 1][1][1] = c
+				if d < objects[label - 1][1][2]:
+					objects[label - 1][1][2] = d
+				if d > objects[label - 1][1][3]:
+					objects[label - 1][1][3] = d
+				
 				#print len(stack)
 				#counter += 1
 				#print counter
@@ -113,12 +128,32 @@ pixels3 = labels
 for y in range(height):
 	for x in range(width):
 		#for z in range(len(objects)):
-		pixels2[x,y] =((labels[x,y]-1)*30,(labels[x,y]-1)*15,(labels[x,y]-1)*15)
+		pixels2[x,y] =((labels[x,y]-1)*30,
+						(labels[x,y]-1)*15,
+						(labels[x,y]-1)*15)
 		if edge_pix[x,y] == 255:
 			pixels2[x,y] = (255,255,255)
 		#print 'select'
 		#print pixels[x,y]
 		#break
+
+# Printing centers of mass
+for x in range(len(objects)):
+	average_x, average_y = 0, 0
+	cumulative_x = objects[x][3]
+	cumulative_y = objects[x][4]
+	total_pix = objects[x][2]
+	average_x = cumulative_x / total_pix
+	average_y = cumulative_y / total_pix
+	#minx = objects[x][1][0] 
+	#maxx = objects[x][1][1]
+	#miny = objects[x][1][2] 
+	#maxy = objects[x][1][3]
+	#average_x = ((maxx - minx) / 2) + minx 
+	#average_y = ((maxy - miny) / 2) + miny 
+	#print minx, maxx, miny, maxy
+	#print average_x, average_y
+	pixels2[int(average_x), int(average_y)] = (0,255,0)
 
 img.show()
 im2.show()

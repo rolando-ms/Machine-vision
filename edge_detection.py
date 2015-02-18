@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 def edge_detection(original, original_pix):
 	# Opening target image
-	original = Image.open('figures.png')
-	original_pix = original.load()
+	#original = Image.open('figures.png')
+	#original_pix = original.load()
 
 	# Saving resolution into variables
 	width, height = original.size
