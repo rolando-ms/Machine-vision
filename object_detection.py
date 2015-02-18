@@ -23,82 +23,42 @@ pixels2 = im2.load()
 
 objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, average x, average y]]
 labels = np.zeros((width,height), dtype = int)
-label = 1
+label = 0
 counter = 0
-z_aux = 0
+#z = 0
 for y in range(height):
 	for x in range(width):
 		remaining = 0
 		stack = [[0,0]]
 		exists = 0
 		dfs = 0
+		#print pixels[x,y], x , y
 		#first = 0
 		while len(stack) > 0:
-			# Checking for existent colors
-			for z in range(len(objects)):
-				if len(objects) == 0:
-					objects[z] = [pixels[x,y],[x,x,y,y],1,0,0]
-					exists = 1
-				elif objects[z][0] == pixels[x,y]:
-					exists = 1	# The color already exists
-					break
-				elif z == len(objects) - 1:
-					exists = 0	# The color doesn't exists
-				
-				z_aux = z
-			'''
-			if exists == 1 and objects[z][2] == 0:
-				objects[z] = [(0,0,0),[x,x,y,y],1,0,0]
-				labels[x,y] = label
-				label += 1
-				'''
-			if exists == 1 and labels[x, y] == 0: # Label N/A
+
+			if len(objects) == 0:
+				objects.append([pixels[x,y],[x,x,y,y],1,0,0])
 				c, d = x, y
 				dfs = 1
-			elif exists == 1 and labels[x, y] > 0: # Labelled
-				break
-			else: #exists == 0
-				objects.append([pixels[x, y], [x,x,y,y], 1, 0, 0])
-			'''
-			if exists == 1 and label[x,y] != z + 1:
-				#exists = 0
-				# Checking for existent label
-				if label[x,y] > 0: 
-					for b in range(-1, 1):
-						for a in range(-1, 1):
-							if	pixels[x + a, y + b] == objects[z][0] and \
-								z + 1 != labels[x,y] and \
-								x + a >= 0 and \
-								x + a <= width - 1 and \
-								y + b >= 0 and \
-								y + b <= height - 1 and
-								edge[x + a, y + b] != 255:
-									remaining += 1
-									c, d = x + a, y + b
-						
-					if remaining > 1:
-						stack.append([x + a,y + b])
-					elif remaining == 0:
-						stack.pop()
-					
-				else:
-					# Assigning label depending on current color
-					label[x,y] = objects[z] + 1
-			
-			elif exists == 1 and label[x, y] == z + 1:
-				break
-			
-			elif exists == 0:
-				# Appending new color and it's data. Assigning label.
-				objects.append([[pixels[x,y]], [x,x,y,y], 1,0,0])
-				labels[x,y] = label
 				label += 1
-			'''
+			elif labels[x,y] != label and edge_pix[x,y] != 255 and \
+				labels[x,y] == 0:
+				objects.append([pixels[x,y],[x,x,y,y],1,0,0])
+				c, d = x, y
+				dfs = 1
+				label += 1
+				#exists = 1
+				#break
+			else:
+				break
+		
 			#print z_aux
 			#print stack
+			#print label
+			#print objects
 			while dfs == 1 and len(stack) > 0:
-				labels[c, d] = z_aux + 1
-				#print stack
+				labels[c, d] = label
+				#print len(stack)
 				#counter += 1
 				#print counter
 				for b in range(-1, 2):
@@ -108,25 +68,40 @@ for y in range(height):
 							c + a <= width - 1 and \
 							d + b >= 0 and \
 							d + b <= height - 1 and \
-							z_aux + 1 != labels[c + a, d + b] and \
+							label != labels[c + a, d + b] and \
 							edge_pix[c + a, d + b] != 255 and \
-							pixels[c + a, d + b] == objects[z_aux][0]:
+							pixels[c + a, d + b] == objects[label-1][0]:
 								remaining += 1
 								c_aux, d_aux = c + a, d + b
 								a_aux, b_aux = a, b
-								#print remaining
+								#print remaining, pixels[c_aux,d_aux], objects[label-1][0]
+								#print label
 				#print 'c = %d , d = %d' %(c, d)
 				#print remaining				
 				if remaining > 1:
 					stack.append([c + a_aux,d + b_aux])
 					c, d = c_aux, d_aux
+					#print 'stack = %d , %d' %(c + a_aux, d + b_aux)
 				elif remaining == 1:
 					c, d = c_aux, d_aux
 				else:
 					# remaining == 0:
 					c, d = stack.pop()
+					#print 'popping'
 				remaining = 0
+				#if c == width - 1 and d == height - 1:
+				#		break
+				#if len(stack) == 0:
+				#	break
 			#first == 1
+			'''
+			if len(stack) == 0:
+				print 'End DFS!!!!!!!!!'
+				break
+			'''
+		
+		#print x, y
+		#print objects
 print objects
 print len(objects)
 '''
@@ -138,7 +113,7 @@ pixels3 = labels
 for y in range(height):
 	for x in range(width):
 		#for z in range(len(objects)):
-		pixels2[x,y] =((labels[x,y]-1)*25,(labels[x,y]-1)*15,(labels[x,y]-1)*15)
+		pixels2[x,y] =((labels[x,y]-1)*30,(labels[x,y]-1)*15,(labels[x,y]-1)*15)
 		if edge_pix[x,y] == 255:
 			pixels2[x,y] = (255,255,255)
 		#print 'select'
