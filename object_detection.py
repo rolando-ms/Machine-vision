@@ -9,17 +9,17 @@ import numpy as np
 img = Image.open('figures.png')
 pixels = img.load()
 
-edge = Image.open('edge.png')
-edge_pix = edge.load()
+#edge = Image.open('edge.png')
+#edge_pix = edge.load()
 
 width, height = img.size
 
 im2 = Image.new('RGB', (width,height), "black")
 pixels2 = im2.load()
 
-#magnitude, angle, edge = edge_detection(img, pixels)
+magnitude, angle, edge = edge_detection(img, pixels)
 #edge.show()
-#edge_pix = edge.load()
+edge_pix = edge.load()
 #edge.save('edge.png')
 
 # Getting background(BG) color according to the max number of pixels
@@ -234,7 +234,7 @@ for x in range(len(objects)):
 		x2 = edge_labels[y][5][0]
 		y1 = objects[x][5][1]
 		y2 = edge_labels[y][5][1]
-		print x1, x2, y1, y2
+		#print x1, x2, y1, y2
 		if abs(x1 - x2) < width * 0.05 and \
 		abs(y1 - y2) < height * 0.05:
 			objects[x][6] = y
@@ -251,14 +251,20 @@ for y in range(height):
 				edgelabel += 1
 	
 
-	
-	
-#print BG
-#print len(edge_labels), len(objects)
-#print objects
-#print edge_labels
-#print 
-#print edgepix, edgelabel
-img.show()
-im2.show()
-#im2.save('objects.png')		
+
+
+#img.show()
+#im2.show()
+#im2.save('objects.png')
+
+im3 = Image.new('L', (width,height), "black")
+pixels3 = im3.load()
+for y in range(height):
+	for x in range(width):
+		if angle[x,y] == 5:
+			pixels3[x,y] = (angle[x,y]) * (255 / 10)
+		elif angle[x,y] != 0:
+			pixels3[x,y] = (angle[x,y] + 5) * (255 / 10)
+
+im3.show()
+im3.save('angles.png')
