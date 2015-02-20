@@ -4,6 +4,7 @@ from edge_detection import edge_detection
 from PIL import Image
 import math
 import numpy as np
+import time
 #import matplotlib.pyplot as plt
 
 img = Image.open('figures.png')
@@ -62,7 +63,7 @@ for y in range(height):
 	for x in range(width):
 		remaining = 0
 		stack = [[0,0]]
-		exists = 0
+		#exists = 0
 		dfs = 0
 		current_color = 0
 		#print pixels[x,y], x , y
@@ -229,7 +230,7 @@ for x in range(len(objects)):
 # Pairing edges and objects	together	
 for x in range(len(objects)):
 	for y in range(len(edge_labels)):
-		found = 0
+		#found = 0
 		x1 = objects[x][5][0]
 		x2 = edge_labels[y][5][0]
 		y1 = objects[x][5][1]
@@ -257,14 +258,114 @@ for y in range(height):
 #im2.show()
 #im2.save('objects.png')
 
+# Normalizing angles and storing into im3
 im3 = Image.new('L', (width,height), "black")
 pixels3 = im3.load()
+labels_img = Image.new('L',(width,height), 'black')
+labels_aux = labels_img.load()
 for y in range(height):
 	for x in range(width):
 		if angle[x,y] == 5:
 			pixels3[x,y] = (angle[x,y]) * (255 / 10)
+			labels_aux[x,y] = pixels3[x,y]
+			#print pixels3[x,y]
 		elif angle[x,y] != 0:
 			pixels3[x,y] = (angle[x,y] + 5) * (255 / 10)
+			labels_aux[x,y] = pixels3[x,y]
+			#print pixels3[x,y]
 
-im3.show()
-im3.save('angles.png')
+#im3.show()
+#im3.save('angles.png')
+
+
+#objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, cumulative x, cumulative y]]
+#edge_labels = []
+#labels = np.zeros((width,height), dtype = int)
+#labels_edge = np.zeros((width,height), dtype = int)
+segments = [[]] # edge_labels, segments
+#label = 0
+#label2 = 0
+
+#labels_aux = pixels3
+counter = 0
+for y in range(height):
+	for x in range(width):
+		stack = [[0,0]]
+		#print pixels3[x,y]
+		#exists = 0
+		dfs = 0
+		while len(stack) > 0:
+
+			if edge_pix[x,y] == 255 and \
+			labels_aux[x,y] != 10:
+				#print 'labels_aux = %d' % labels_aux[x,y]
+				segments.append([])
+				segments[counter].append([pixels3[x, y],[]])
+				#edge_labels.append([0,[x,x,y,y],0,0,0,(0,0)]) #(label,[minx,maxx,miny,maxy], #pixels,cumulative_x,cumulative_y,(center of mass xy))
+				dfs = 1
+				#label2 += 1
+				#multiplier = 20 # label 2 multiplier
+				c, d = x, y
+				
+				while dfs == 1 and len(stack) > 0:
+					#print segments
+					#print segments[0]
+					#print counter
+					labels_aux[c, d] = 10
+					#print 'longitud = %d , counter = %d' %(len(segments[counter]), counter)
+					if len(segments[counter][0][1]) == 0:
+						segments[counter][0][1].append((c,d))
+						#print pixels3[c,d]#'uno'
+						#time.sleep(0.5)
+					else:
+						for e in range(len(segments[counter])):
+							if abs(segments[counter][e][0] - pixels3[c, d]) < segments[counter][e][0] * 0.005:
+								#print segments[counter][e][0], pixels3[c, d]
+								#print counter #'varios'
+								segments[counter][e][1].append((c, d))
+								break
+							if e == len(segments[counter]) - 1:
+								#print pixels3[c,d]
+								segments[counter].append([pixels3[c, d],[(c, d)]])
+								#print 'ultimo'
+					for b in range(-1, 2):
+						for a in range(-1, 2):
+							if  c + a >= 0 and \
+								c + a <= width - 1 and \
+								d + b >= 0 and \
+								d + b <= height - 1 and \
+								labels_aux[c + a, d + b] != 10 and \
+								edge_pix[c + a, d + b] == 255: 
+									remaining += 1 # pixels[c + a, d + b] == objects[label-1][0]
+									c_aux, d_aux = c + a, d + b
+									a_aux, b_aux = a, b
+				
+					if remaining > 1:
+						stack.append([c + a_aux,d + b_aux])
+						c, d = c_aux, d_aux
+					elif remaining == 1:
+						c, d = c_aux, d_aux
+					else:
+						c, d = stack.pop()
+					remaining = 0
+					#print len(stack)
+				counter += 1
+				#segments.append([])
+			else:
+				break
+
+for x in range(len(segments)):
+	print 'Object %d' % x
+	for y in range(len(segments[x])):
+		print 'Segment %d' % y
+		print segments[x][y]
+
+#print len(segments[6])
+#print len(segments[0])
+'''
+# Deleting small segments and false objects
+for x in range(len(segments)):
+	for y in range(len(segments[x])):
+		object = len(segments)
+		if len(segments[len(segments) - ])
+'''
