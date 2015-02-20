@@ -40,9 +40,11 @@ for y in range(height):
 						colors.append(pixels[x,y])
 						quantity.append(1)
 
+BG = []
 for x in range(len(colors)):
 	if quantity[x] == max(quantity):
-		BG = colors[x]
+		BG.append(colors[x])
+		BG.append(max(quantity))
 		quantity = []	# Deleting data
 		colors = []		# Deleting data
 		break
@@ -68,68 +70,57 @@ for y in range(height):
 		while len(stack) > 0:
 
 			if edge_pix[x,y] == 255 and labels_edge[x,y] == 0:
-				edge_labels.append([0,0,[x,x,y,y]]) #(label, #pixels)
+				edge_labels.append([0,[x,x,y,y],0,0,0,(0,0)]) #(label,[minx,maxx,miny,maxy], #pixels,cumulative_x,cumulative_y,(center of mass xy))
 				dfs = 1
 				label2 += 1
+				multiplier = 20 # label 2 multiplier
 				c, d = x, y
 				while dfs == 1 and len(stack) > 0:
-					#print len(edge_labels)
-					#remaining = 0
-					labels_edge[c, d] = label2
-					edge_labels[label2 - 1][0] = label2
-					edge_labels[label2 - 1][1] += 1
-					#edge_labels[label - 1][3] = objects[label - 1][3] + c
-					#edge_labels[label - 1][4] = objects[label - 1][4] + d
+					labels_edge[c, d] = label2 * multiplier
+					edge_labels[label2 - 1][0] = label2 * multiplier
+					edge_labels[label2 - 1][2] += 1
+					edge_labels[label2 - 1][3] = edge_labels[label2 - 1][3] + c
+					edge_labels[label2 - 1][4] = edge_labels[label2 - 1][4] + d
 				
 					# min and max
-					if c < edge_labels[label2 - 1][2][0]:
-						edge_labels[label2 - 1][2][0] = c
-					if c > edge_labels[label2 - 1][2][1]:
-						edge_labels[label2 - 1][2][1] = c
-					if d < edge_labels[label2 - 1][2][2]:
-						edge_labels[label2 - 1][2][2] = d
-					if d > edge_labels[label2 - 1][2][3]:
-						edge_labels[label2 - 1][2][3] = d
+					if c < edge_labels[label2 - 1][1][0]:
+						edge_labels[label2 - 1][1][0] = c
+					if c > edge_labels[label2 - 1][1][1]:
+						edge_labels[label2 - 1][1][1] = c
+					if d < edge_labels[label2 - 1][1][2]:
+						edge_labels[label2 - 1][1][2] = d
+					if d > edge_labels[label2 - 1][1][3]:
+						edge_labels[label2 - 1][1][3] = d
 				
-					#print len(stack)
-					#counter += 1
-					#print counter
 					for b in range(-1, 2):
 						for a in range(-1, 2):
-							#print c , d , a , b
 							if  c + a >= 0 and \
 								c + a <= width - 1 and \
 								d + b >= 0 and \
 								d + b <= height - 1 and \
-								label2 != labels_edge[c + a, d + b] and \
+								label2 * multiplier != labels_edge[c + a, d + b] and \
 								edge_pix[c + a, d + b] == 255: 
 									remaining += 1 # pixels[c + a, d + b] == objects[label-1][0]
 									c_aux, d_aux = c + a, d + b
 									a_aux, b_aux = a, b
-									#print remaining, pixels[c_aux,d_aux], objects[label-1][0]
-									#print label
-					#print 'c = %d , d = %d' %(c, d)
-					#print remaining				
+				
 					if remaining > 1:
 						stack.append([c + a_aux,d + b_aux])
 						c, d = c_aux, d_aux
-						#print 'stack = %d , %d' %(c + a_aux, d + b_aux)
 					elif remaining == 1:
 						c, d = c_aux, d_aux
 					else:
-						# remaining == 0:
 						c, d = stack.pop()
-						#print 'popping'
 					remaining = 0
 			else:
 				if len(objects) == 0:
-					objects.append([pixels[x,y],[x,x,y,y],0,x,y])
+					objects.append([pixels[x,y],[x,x,y,y],0,x,y,(0,0),0])
 					c, d = x, y
 					dfs = 1
 					label += 1
 				elif labels[x,y] != label and edge_pix[x,y] != 255 and \
 					labels[x,y] == 0:
-					objects.append([pixels[x,y],[x,x,y,y],0,x,y])
+					objects.append([pixels[x,y],[x,x,y,y],0,x,y,(0,0),0])
 					c, d = x, y
 					dfs = 1
 					label += 1
@@ -190,22 +181,6 @@ for y in range(height):
 						c, d = stack.pop()
 						#print 'popping'
 					remaining = 0
-					
-'''
-for c in range(2):
-	for y in range(height):
-		for x in range(width):
-			found = 0
-			if edge_pix[x,y] == 255 and labels[x,y] == 0:
-				for a in range(-4,5):
-					for b in range(-4,5):
-						if pixels[x+a,y+b] != BG:
-							labels[x,y] = labels[x+a,y+b]
-							found = 1
-							break
-					if found == 1:
-						break
-'''
 
 # Printing objects
 for y in range(height):
@@ -223,7 +198,7 @@ for y in range(height):
 		#print pixels[x,y]
 		#break
 
-# Printing centers of mass
+# Printing centers of mass of objects
 for x in range(len(objects)):
 	average_x, average_y = 0, 0
 	cumulative_x = objects[x][3]
@@ -231,16 +206,42 @@ for x in range(len(objects)):
 	total_pix = objects[x][2]
 	average_x = cumulative_x / total_pix
 	average_y = cumulative_y / total_pix
-	#minx = objects[x][1][0] 
-	#maxx = objects[x][1][1]
-	#miny = objects[x][1][2] 
-	#maxy = objects[x][1][3]
-	#average_x = ((maxx - minx) / 2) + minx 
-	#average_y = ((maxy - miny) / 2) + miny 
-	#print minx, maxx, miny, maxy
-	#print average_x, average_y
+	objects[x][5] = (average_x, average_y)
 	pixels2[int(average_x), int(average_y)] = (0,255,0)
+	
+# Printing centers of mass 2 (of contours)
+for x in range(len(edge_labels)):
+	average_x, average_y = 0, 0
+	cumulative_x = edge_labels[x][3]
+	cumulative_y = edge_labels[x][4]
+	total_pix = edge_labels[x][2]
+	average_x = cumulative_x / total_pix
+	average_y = cumulative_y / total_pix
+	edge_labels[x][5] = (average_x, average_y)
+	pixels2[int(average_x), int(average_y)] = (255,0,0)
 
+# Popping background from objects
+for x in range(len(objects)):
+	if objects[x][0] == BG[0]:
+		background = objects.pop(x)
+		break
+
+# Pairing edges and objects	together	
+for x in range(len(objects)):
+	for y in range(len(edge_labels)):
+		found = 0
+		x1 = objects[x][5][0]
+		x2 = edge_labels[y][5][0]
+		y1 = objects[x][5][1]
+		y2 = edge_labels[y][5][1]
+		print x1, x2, y1, y2
+		if abs(x1 - x2) < width * 0.05 and \
+		abs(y1 - y2) < height * 0.05:
+			objects[x][6] = y
+			#found = 1
+			break
+
+# Counting edge pixels and unlabelled edge pixels
 edgepix, edgelabel = 0, 0
 for y in range(height):
 	for x in range(width):
@@ -249,7 +250,15 @@ for y in range(height):
 			if labels_edge[x,y] == 0:
 				edgelabel += 1
 	
-print len(edge_labels)
-print edgepix, edgelabel
+
+	
+	
+#print BG
+#print len(edge_labels), len(objects)
+#print objects
+#print edge_labels
+#print 
+#print edgepix, edgelabel
 img.show()
 im2.show()
+#im2.save('objects.png')		
