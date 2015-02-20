@@ -51,6 +51,8 @@ def edge_detection(original, original_pix):
 		
 			# Calculating angle from components
 			angles[x,y] = math.atan2(filtery, filterx)
+			if magnitudes[x,y] > 0 and angles[x,y] == 0:
+				angles[x,y] = 5
 			#print angles[x,y]
 			# Saving min and max magnitude values
 			if x == 0 and y == 0:
