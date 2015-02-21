@@ -7,7 +7,6 @@ from PIL import ImageDraw
 import math
 import numpy as np
 import time
-import font
 #import matplotlib.pyplot as plt
 
 img = Image.open('figures.png')
@@ -421,7 +420,7 @@ print objects
 print edge_labels
 print sides
 draw = ImageDraw.Draw(im2)
-font = ImageFont.truetype("times.ttf", 9)
+font = ImageFont.load_default()
 detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],[(0,255,255),'P7']]
 for z in range(len(objects)):
 	number = sides[z] - 1
