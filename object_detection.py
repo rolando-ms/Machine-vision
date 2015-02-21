@@ -263,16 +263,23 @@ im3 = Image.new('L', (width,height), "black")
 pixels3 = im3.load()
 labels_img = Image.new('L',(width,height), 'black')
 labels_aux = labels_img.load()
+angle_max, angle_min = 0.0, 0.0
 for y in range(height):
 	for x in range(width):
 		if angle[x,y] == 5:
-			pixels3[x,y] = (angle[x,y]) * (255 / 10)
+			pixels3[x,y] = (math.pi) * (255 / (2 * math.pi) + 0.01)
 			labels_aux[x,y] = pixels3[x,y]
 			#print pixels3[x,y]
 		elif angle[x,y] != 0:
-			pixels3[x,y] = (angle[x,y] + 5) * (255 / 10)
+			pixels3[x,y] = (angle[x,y] + math.pi) * (255 / (2 * math.pi) + 0.15)
 			labels_aux[x,y] = pixels3[x,y]
 			#print pixels3[x,y]
+		# Maximum and minimum angle values
+		if angle[x,y] > angle_max and angle[x,y] != 5:
+			angle_max = angle[x,y]
+		if angle[x,y] < angle_min:
+			angle_min = angle[x,y]
+#print angle_max, angle_min
 
 #im3.show()
 #im3.save('angles.png')
@@ -282,52 +289,50 @@ for y in range(height):
 #edge_labels = []
 #labels = np.zeros((width,height), dtype = int)
 #labels_edge = np.zeros((width,height), dtype = int)
-segments = [[]] # edge_labels, segments
+#segments = [] # edge_labels, segments
 #label = 0
 #label2 = 0
-
+quadrants = 24
+segments = []
 #labels_aux = pixels3
 counter = 0
+#multiplier = 0
 for y in range(height):
 	for x in range(width):
 		stack = [[0,0]]
 		#print pixels3[x,y]
 		#exists = 0
 		dfs = 0
+		#multiplier = 0
 		while len(stack) > 0:
 
 			if edge_pix[x,y] == 255 and \
 			labels_aux[x,y] != 10:
-				#print 'labels_aux = %d' % labels_aux[x,y]
 				segments.append([])
-				segments[counter].append([pixels3[x, y],[]])
+				for e in range(quadrants):
+					segments[counter].append([])
+					
+				#segments.append([])
+				#segments[counter].append([pixels3[x, y],[]])
 				#edge_labels.append([0,[x,x,y,y],0,0,0,(0,0)]) #(label,[minx,maxx,miny,maxy], #pixels,cumulative_x,cumulative_y,(center of mass xy))
 				dfs = 1
-				#label2 += 1
-				#multiplier = 20 # label 2 multiplier
 				c, d = x, y
 				
 				while dfs == 1 and len(stack) > 0:
-					#print segments
-					#print segments[0]
-					#print counter
 					labels_aux[c, d] = 10
-					#print 'longitud = %d , counter = %d' %(len(segments[counter]), counter)
-					if len(segments[counter][0][1]) == 0:
-						segments[counter][0][1].append((c,d))
-						#print pixels3[c,d]#'uno'
-						#time.sleep(0.5)
-					else:
-						for e in range(len(segments[counter])):
-							if abs(segments[counter][e][0] - pixels3[c, d]) < segments[counter][e][0] * 0.005:
-								#print segments[counter][e][0], pixels3[c, d]
-								#print counter #'varios'
-								segments[counter][e][1].append((c, d))
-								break
-							if e == len(segments[counter]) - 1:
-								#print pixels3[c,d]
-								segments[counter].append([pixels3[c, d],[(c, d)]])
-								#print 'ultimo'
+					multiplier = 1
+					for e in range(len(segments[counter])):
+						if pixels3[c,d] <= ((255 / quadrants) * multiplier):
+							segments[counter][e].append((c,d))
+							#print multiplier
+							#print segments[counter]
+							#time.sleep(0.5)
+							break
+						if e == len(segments[counter]) - 1:
+							segments[counter][e].append((c,d))
+							break
+						multiplier += 1
+						
 					for b in range(-1, 2):
 						for a in range(-1, 2):
 							if  c + a >= 0 and \
