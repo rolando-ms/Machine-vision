@@ -358,19 +358,27 @@ for y in range(height):
 				#segments.append([])
 			else:
 				break
-
+'''
 for x in range(len(segments)):
 	print 'Object %d' % x
 	for y in range(len(segments[x])):
 		print 'Segment %d' % y
 		print segments[x][y]
-
+'''
 #print len(segments[6])
 #print len(segments[0])
-'''
+
 # Deleting small segments and false objects
 for x in range(len(segments)):
 	for y in range(len(segments[x])):
-		object = len(segments)
-		if len(segments[len(segments) - ])
+		if segments[x][y] == 0:
+			segments[x][y].pop()
+'''
+sides = []
+for x in range(len(segments)):
+	sides.append(0)
+	for y in range(len(segments[x])):
+		if len(segments[x][y]) > 10 and \
+		len(segments[x][y] < 10):
+			sides[x] += 1
 '''
