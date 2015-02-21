@@ -367,18 +367,44 @@ for x in range(len(segments)):
 '''
 #print len(segments[6])
 #print len(segments[0])
-
+#print len(segments)
+#print segments
+#time.sleep(1)
+#print len(segments[0])
+#print segments[0]
+#time.sleep(1)
+#print len(segments[0][0])
+#print segments[0][0]
+#time.sleep(1)
 # Deleting small segments and false objects
 for x in range(len(segments)):
+	#print 'Object %d' % x
+	number = len(segments[x]) - 1
 	for y in range(len(segments[x])):
-		if segments[x][y] == 0:
-			segments[x][y].pop()
+		#print len(segments[x][number])
+		if len(segments[x][number]) == 0:
+			segments[x].pop(number)
+			number += -1
+			#print 'Popping'
+		else:
+			number += -1
+'''			
+for x in range(len(segments)):
+	print 'Object %d' % x
+	for y in range(len(segments[x])):
+		print 'Segment %d' % y
+		print segments[x][y]
 '''
+
 sides = []
 for x in range(len(segments)):
 	sides.append(0)
 	for y in range(len(segments[x])):
 		if len(segments[x][y]) > 10 and \
-		len(segments[x][y] < 10):
+		y == len(segments[x]) - 1:
 			sides[x] += 1
-'''
+		elif len(segments[x][y]) > 10 and \
+		len(segments[x][y+1]) < 10:
+			sides[x] += 1
+			
+print sides
