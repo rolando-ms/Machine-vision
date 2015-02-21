@@ -2,9 +2,12 @@ from lab import modules_lab as modlab # Here I have my lab modules
 from lecture import modules_lecture as modlec # Here I have my lecture modules
 from edge_detection import edge_detection
 from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
 import math
 import numpy as np
 import time
+import font
 #import matplotlib.pyplot as plt
 
 img = Image.open('figures.png')
@@ -193,8 +196,9 @@ for y in range(height):
 		if edge_pix[x,y] == 255 and \
 		labels[x,y] > 1:
 			pixels2[x,y] == (255,0,0)
-		#elif edge_pix[x,y] == 255:
-		#	pixels2[x,y] = (255,255,255)
+		
+		if edge_pix[x,y] == 255:
+			pixels2[x,y] = (255,255,255)
 		#print 'select'
 		#print pixels[x,y]
 		#break
@@ -396,6 +400,7 @@ for x in range(len(segments)):
 		print segments[x][y]
 '''
 
+# Counting sides of each object
 sides = []
 for x in range(len(segments)):
 	sides.append(0)
@@ -407,4 +412,27 @@ for x in range(len(segments)):
 		len(segments[x][y+1]) < 10:
 			sides[x] += 1
 			
+# Printing bounding boxes
+# sides < 3 ==> C (circle)
+# sides =3 ==> T3 (Triangle)
+# sides = 4 ==> P4 (Polygon)
+# sides = 5 ==> P5 (Popygon), etc
+print objects
+print edge_labels
 print sides
+draw = ImageDraw.Draw(im2)
+font = ImageFont.truetype("times.ttf", 9)
+detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],[(0,255,255),'P7']]
+for z in range(len(objects)):
+	number = sides[z] - 1
+	for x in range(4):
+		if x < 2:
+			for y in range(edge_labels[z][1][2], edge_labels[z][1][3]):
+				pixels2[edge_labels[z][1][x],y] = detected[number][0]
+				
+		else:
+			for y in range(edge_labels[z][1][0], edge_labels[z][1][1]):
+				pixels2[y,edge_labels[z][1][x]] = detected[number][0]
+		draw.text((objects[z][5]),detected[number][1],detected[number][0],font=font) #% detected[number][1]
+
+im2.show()
