@@ -28,12 +28,16 @@ def edge_detection(original, original_pix):
 	# Using sobel masks that minimizes angle errors according to:
 	# "Procesamiento digital de imagenes con MATLAB y Simulink"
 	# ISBN: 978-607-707-030-6
+	sobelx = modlec.masks.sobelxangle
+	sobely = modlec.masks.sobelyangle
+	'''
 	sobelx = np.array([[-3.0,0.0,3.0]
 					,[-10.0,0.0,10.0]
 					,[-3.0,0.0,3.0]])
 	sobely = np.array([[-3.0,-10.0,-3.0]
 						,[0.0,0.0,0.0]
 						,[3.0,10.0,3.0]])
+	'''
 
 	# Creating zeros matrices to store values
 	magnitudes = np.zeros((width,height), dtype = float)

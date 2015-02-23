@@ -1,5 +1,47 @@
 import math
 from PIL import Image
+import numpy as np
+
+#************************
+# Class masks
+#************************
+# This class includes different masks.
+class masks():
+	# Gaussian mask (for smoothing)
+	gauss = np.array([[0,1,2,1,0],
+					  [1,3,5,3,1],
+					  [2,5,9,5,2],
+					  [1,3,5,3,1],
+					  [0,1,2,1,0]])
+					  
+	# Edge detection masks
+	
+	# Sobel masks that reduce angle errors
+	sobelxangle = np.array([[-3.0,0.0,3.0]
+					  ,[-10.0,0.0,10.0]
+					  ,[-3.0,0.0,3.0]])
+					  
+	sobelyangle = np.array([[-3.0,-10.0,-3.0]
+				      ,[0.0,0.0,0.0]
+					  ,[3.0,10.0,3.0]])
+					  
+	# Default sobel masks
+	sobelx = np.array([[-1.0,0.0,1.0]
+					  ,[-2.0,0.0,2.0]
+					  ,[-1.0,0.0,1.0]])
+					  
+	sobely = np.array([[-1.0,-2.0,-1.0]
+				      ,[0.0,0.0,0.0]
+					  ,[1.0,2.0,1.0]])
+					  
+	# Default Prewitt masks
+	prewittx = np.array([[-1.0,0.0,1.0]
+						,[-1.0,0.0,1.0]
+						,[-1.0,0.0,1.0]])
+						
+	prewitty = np.array([[1.0,1.0,1.0]
+						,[0.0,0.0,0.0]
+						,[-1.0,-1.0,-1.0]])
 
 #************************
 # Apply edge mask module

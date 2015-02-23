@@ -416,9 +416,9 @@ for x in range(len(segments)):
 # sides =3 ==> T3 (Triangle)
 # sides = 4 ==> P4 (Polygon)
 # sides = 5 ==> P5 (Popygon), etc
-print objects
-print edge_labels
-print sides
+#print objects
+#print edge_labels
+#print sides
 draw = ImageDraw.Draw(im2)
 font = ImageFont.load_default()
 detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],[(0,255,255),'P7']]
