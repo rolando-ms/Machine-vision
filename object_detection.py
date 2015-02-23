@@ -2,14 +2,19 @@ from lab import modules_lab as modlab # Here I have my lab modules
 from lecture import modules_lecture as modlec # Here I have my lecture modules
 from edge_detection import edge_detection
 from PIL import Image
-from PIL import ImageFont
-from PIL import ImageDraw
+from PIL import ImageFont # Use fonts
+from PIL import ImageDraw # Draw texts
 import math
 import numpy as np
-import time
+import time # to use time.sleep('time in seconds')
+import os # to construct a path relative to this script
 #import matplotlib.pyplot as plt
 
-img = Image.open('figures.png')
+#obj_detDir = os.path.dirname(__file__) # Getting path of this script
+#imgpath = os.path.join(obj_detDir, '../benchmark_imgs/figures.png') # Relative path to target image
+imgspath = 'benchmark_imgs/'
+name = 'figures.png'
+img = Image.open(imgspath + name)
 pixels = img.load()
 
 #edge = Image.open('edge.png')
