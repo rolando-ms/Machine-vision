@@ -5,10 +5,15 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+#***********************
+# Edge detection module
+#***********************
+# This module calculates, from a target image, the edges and returns
+# an numpy array with the normalized magnitudes of the gradients (0-255),
+# the angles in radians (-pi,pi) and a GS image with the edges (edge = 255,
+# no edge = 0)
+
 def edge_detection(original, original_pix):
-	# Opening target image
-	#original = Image.open('figures.png')
-	#original_pix = original.load()
 
 	# Saving resolution into variables
 	width, height = original.size
@@ -30,14 +35,6 @@ def edge_detection(original, original_pix):
 	# ISBN: 978-607-707-030-6
 	sobelx = modlec.masks.sobelxangle
 	sobely = modlec.masks.sobelyangle
-	'''
-	sobelx = np.array([[-3.0,0.0,3.0]
-					,[-10.0,0.0,10.0]
-					,[-3.0,0.0,3.0]])
-	sobely = np.array([[-3.0,-10.0,-3.0]
-						,[0.0,0.0,0.0]
-						,[3.0,10.0,3.0]])
-	'''
 
 	# Creating zeros matrices to store values
 	magnitudes = np.zeros((width,height), dtype = float)
@@ -102,6 +99,19 @@ def edge_detection(original, original_pix):
 	#result.show()
 	
 	return magnitudes, angles, edges
+	
+# Main function, to use edge_detection as a script
+if __name__ == "__main__":
+	
+	# Opening target image
+	imgspath = 'benchmark_imgs/'
+	name = 'figures.png'
+	img = Image.open(imgspath + name)
+	pixels = img.load()
+	
+	# Getting edges from img
+	magnitude, angle, edge = edge_detection(img, pixels)
+	edge.show()
 
 
 
