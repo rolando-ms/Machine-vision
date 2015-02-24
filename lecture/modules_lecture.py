@@ -298,8 +298,44 @@ def chose_edges(hist, magnitude, image, imheight, imwidth):
 				image[x,y] = 255
 				
 	return image  
-			
 	
+
+#*************************
+# Background color module
+#*************************
+# This module extracts the background color by counting the repetitions
+# of each pixel presented in the input RGB image. The background is the
+# most repeated value.
+def bg_color(original):
+	original_pix = original.load()
+	width, height = original.size
+	colors = []
+	quantity = []
+	for y in range(height):
+		for x in range(width):
+			if len(colors) == 0:
+				colors.append(original_pix[x,y])
+				quantity.append(1)
+			else:
+				for z in range(len(colors)):
+					if original_pix[x,y] == colors[z]:
+						quantity[z] += 1
+						break
+					elif original_pix[x,y] != colors[z] and \
+						z == len(colors) - 1:
+							colors.append(original_pix[x,y])
+							quantity.append(1)
+
+	bg = []
+	for x in range(len(colors)):
+		if quantity[x] == max(quantity):
+			bg.append(colors[x])
+			bg.append(max(quantity))
+			quantity = []	# Deleting data
+			colors = []		# Deleting data
+			break
+	
+	return bg
 '''	
 def object_dfs():
 

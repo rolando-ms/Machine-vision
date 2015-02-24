@@ -10,50 +10,22 @@ import time # to use time.sleep('time in seconds')
 import os # to construct a path relative to this script
 #import matplotlib.pyplot as plt
 
-#obj_detDir = os.path.dirname(__file__) # Getting path of this script
-#imgpath = os.path.join(obj_detDir, '../benchmark_imgs/figures.png') # Relative path to target image
 
-
-#edge = Image.open('edge.png')
-#edge_pix = edge.load()
 def object_detection(original_obj, original_obj_pix):
+	# Getting sizes of target image
 	width, height = original_obj.size
-
-	im2 = Image.new('RGB', (width,height), "black")
-	pixels2 = im2.load()
-
+	
+	# Creating result image
+	objs = Image.new('RGB', (width,height), "black")
+	objs_pix = objs.load()
+	
+	# Calculating magnitudes and angles of gradients. Getting edges.
 	magnitude, angle, edge = edge_detection(original_obj, original_obj_pix)
 	#edge.show()
 	edge_pix = edge.load()
 	#edge.save('edge.png')
-
-	# Getting background(BG) color according to the max number of pixels
-	colors = []
-	quantity = []
-	for y in range(height):
-		for x in range(width):
-			if len(colors) == 0:
-				colors.append(original_obj_pix[x,y])
-				quantity.append(1)
-			else:
-				for z in range(len(colors)):
-					if original_obj_pix[x,y] == colors[z]:
-						quantity[z] += 1
-						break
-					elif original_obj_pix[x,y] != colors[z] and \
-						z == len(colors) - 1:
-							colors.append(original_obj_pix[x,y])
-							quantity.append(1)
-
-	BG = []
-	for x in range(len(colors)):
-		if quantity[x] == max(quantity):
-			BG.append(colors[x])
-			BG.append(max(quantity))
-			quantity = []	# Deleting data
-			colors = []		# Deleting data
-			break
-
+	
+	BG = modlec.bg_color(objs)
 
 	objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, cumulative x, cumulative y]]
 	edge_labels = []
@@ -191,15 +163,15 @@ def object_detection(original_obj, original_obj_pix):
 	for y in range(height):
 		for x in range(width):
 			#for z in range(len(objects)):
-			pixels2[x,y] =((labels[x,y]-1)*30,
+			objs_pix[x,y] =((labels[x,y]-1)*30,
 							(labels[x,y]-1)*15,
 							(labels[x,y]-1)*15)
 			if edge_pix[x,y] == 255 and \
 			labels[x,y] > 1:
-				pixels2[x,y] == (255,0,0)
+				objs_pix[x,y] == (255,0,0)
 			
 			if edge_pix[x,y] == 255:
-				pixels2[x,y] = (255,255,255)
+				objs_pix[x,y] = (255,255,255)
 			#print 'select'
 			#print pixels[x,y]
 			#break
@@ -213,7 +185,7 @@ def object_detection(original_obj, original_obj_pix):
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
 		objects[x][5] = (average_x, average_y)
-		pixels2[int(average_x), int(average_y)] = (0,255,0)
+		objs_pix[int(average_x), int(average_y)] = (0,255,0)
 		
 	# Printing centers of mass 2 (of contours)
 	for x in range(len(edge_labels)):
@@ -224,7 +196,7 @@ def object_detection(original_obj, original_obj_pix):
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
 		edge_labels[x][5] = (average_x, average_y)
-		pixels2[int(average_x), int(average_y)] = (255,0,0)
+		objs_pix[int(average_x), int(average_y)] = (255,0,0)
 
 	# Popping background from objects
 	for x in range(len(objects)):
@@ -260,8 +232,8 @@ def object_detection(original_obj, original_obj_pix):
 
 
 	#original_obj.show()
-	#im2.show()
-	#im2.save('objects.png')
+	#objs.show()
+	#objs.save('objects.png')
 
 	# Normalizing angles and storing into im3
 	im3 = Image.new('L', (width,height), "black")
@@ -421,7 +393,7 @@ def object_detection(original_obj, original_obj_pix):
 	#print objects
 	#print edge_labels
 	#print sides
-	draw = ImageDraw.Draw(im2)
+	draw = ImageDraw.Draw(objs)
 	font = ImageFont.load_default()
 	detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],[(0,255,255),'P7']]
 	for z in range(len(objects)):
@@ -429,15 +401,15 @@ def object_detection(original_obj, original_obj_pix):
 		for x in range(4):
 			if x < 2:
 				for y in range(edge_labels[z][1][2], edge_labels[z][1][3]):
-					pixels2[edge_labels[z][1][x],y] = detected[number][0]
+					objs_pix[edge_labels[z][1][x],y] = detected[number][0]
 					
 			else:
 				for y in range(edge_labels[z][1][0], edge_labels[z][1][1]):
-					pixels2[y,edge_labels[z][1][x]] = detected[number][0]
+					objs_pix[y,edge_labels[z][1][x]] = detected[number][0]
 			draw.text((objects[z][5]),detected[number][1],detected[number][0],font=font) #% detected[number][1]
 
-	im2.show()
-	return im2
+	objs.show()
+	return objs
 
 # Main function
 if __name__ == "__main__":
@@ -449,3 +421,32 @@ if __name__ == "__main__":
 	
 	detected = object_detection(img,pixels)
 	detected.show
+	
+'''
+	# Getting background(BG) color according to the max number of pixels
+	colors = []
+	quantity = []
+	for y in range(height):
+		for x in range(width):
+			if len(colors) == 0:
+				colors.append(original_obj_pix[x,y])
+				quantity.append(1)
+			else:
+				for z in range(len(colors)):
+					if original_obj_pix[x,y] == colors[z]:
+						quantity[z] += 1
+						break
+					elif original_obj_pix[x,y] != colors[z] and \
+						z == len(colors) - 1:
+							colors.append(original_obj_pix[x,y])
+							quantity.append(1)
+
+	BG = []
+	for x in range(len(colors)):
+		if quantity[x] == max(quantity):
+			BG.append(colors[x])
+			BG.append(max(quantity))
+			quantity = []	# Deleting data
+			colors = []		# Deleting data
+			break
+'''
