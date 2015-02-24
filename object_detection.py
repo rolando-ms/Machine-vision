@@ -160,13 +160,13 @@ def object_detection(original_obj, original_obj_pix):
 					
 						# min and max
 						if c < edge_labels2[label2 - 1]._minx:
-							edge_labels2[label2 - 1].minx(c)
+							edge_labels2[label2 - 1]._minx = c
 						if c > edge_labels2[label2 - 1]._maxx:
-							edge_labels2[label2 - 1].maxx(c)
+							edge_labels2[label2 - 1]._maxx = c
 						if d < edge_labels2[label2 - 1]._miny:
-							edge_labels2[label2 - 1].miny(d)
+							edge_labels2[label2 - 1]._miny = d
 						if d > edge_labels2[label2 - 1]._maxy:
-							edge_labels2[label2 - 1].maxy(d)
+							edge_labels2[label2 - 1]._maxy = d
 					
 						for b in range(-1, 2):
 							for a in range(-1, 2):
@@ -224,13 +224,13 @@ def object_detection(original_obj, original_obj_pix):
 					
 						# min and max
 						if c < objects2[label - 1]._minx:
-							objects2[label - 1].minx(c)
+							objects2[label - 1]._minx = c
 						if c > objects2[label - 1]._maxx:
-							objects2[label - 1].maxx(c)
+							objects2[label - 1]._maxx = c
 						if d < objects2[label - 1]._miny:
-							objects2[label - 1].miny(d)
+							objects2[label - 1]._miny = d
 						if d > objects2[label - 1]._maxy:
-							objects2[label - 1].maxy(d)
+							objects2[label - 1]._maxy = d
 					
 						#print len(stack)
 						#counter += 1
