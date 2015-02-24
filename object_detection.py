@@ -14,32 +14,48 @@ class object_data:
 	data = 'color, min_max, pix_number, cumulative_x, cumulative_y \
 	center_mass'
 	
-	def __init__(self, number):
+	def __init__(self):
 		#self.object = 'object %d' %number
-		self.color = ()
-		self.min_max = []
-		self.pix_number = 0
-		self.cumulative_x = 0
-		self.cumulative_y = 0
-		self.center_mass = []
+		self._color = ()
+		self._minx = 0
+		self._miny = 0
+		self._maxx = 0
+		self._maxy = 0
+		self._pix_number = 0
+		self._cumulative_x = 0
+		self._cumulative_y = 0
+		self._center_mass = []
 	
-	def color(self, color):
-		self._color = color
+	def color(self, colour):
+		self._color = colour
+		
+	def minx(self, minX):
+		self._minx = minX
+		
+	def maxx(self, maxX):
+		self._maxx = maxX
 
-	def min_max(self, min_and_max):
-		self._min_max = min_and_max
+	def miny(self, minY):
+		self._miny = minY
+		
+	def maxy(self, maxY):
+		self._maxy = maxY
 
 	def pix_number(self, num_pix):
-		self._pix_number = num_pix
+		self._pix_number += num_pix
 		
 	def cumulative_x(self, cumulativex):
-		self._cumulative_x = cumulativex
+		self._cumulative_x += cumulativex
 
 	def cumulative_y(self, cumulativey):
-		self._cumulative_y = cumulativey
+		self._cumulative_y += cumulativey
 		
-	def center_mass(self, centermass):
-		self._center_mass = centermass
+	def center_mass(self, centerx, centery):
+		self._center_mass.append(centerx)
+		self._center_mass.append(centery)
+		
+	def label(self, current_label):
+		self._label = current_label
 		
 class edge_labels_data:
 	data = 'color, min_max, pix_number, cumulative_x, cumulative_y \
@@ -48,7 +64,6 @@ class edge_labels_data:
 	def __init__(self):
 		#self.object = 'object %d' %number
 		self._label = 0
-		self._min_max = []
 		self._minx = 0
 		self._miny = 0
 		self._maxx = 0
@@ -60,9 +75,6 @@ class edge_labels_data:
 	
 	def label(self, current_label):
 		self._label = current_label
-
-	def min_max(self, min_and_max):
-		self._min_max = min_and_max
 		
 	def minx(self, minX):
 		self._minx = minX
@@ -85,8 +97,9 @@ class edge_labels_data:
 	def cumulative_y(self, cumulativey):
 		self._cumulative_y += cumulativey
 		
-	def center_mass(self, centermass):
-		self._center_mass = centermass
+	def center_mass(self, centerx, centery):
+		self._center_mass.append(centerx)
+		self._center_mass.append(centery)
 		
 def object_detection(original_obj, original_obj_pix):
 	# Getting sizes of target image
@@ -105,10 +118,11 @@ def object_detection(original_obj, original_obj_pix):
 	# Getting background color and the number of pixels
 	BG = modlec.bg_color(objs)
 
-	print object_data.data
+	#print object_data.data
 	
-	objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, cumulative x, cumulative y]]
-	edge_labels = []
+	#objects = [] # [[(color),(minx,maxx,miny,maxy), # of pixels, cumulative x, cumulative y]]
+	objects2 = []
+	#edge_labels = []
 	edge_labels2 = []
 	labels = np.zeros((width,height), dtype = int)
 	labels_edge = np.zeros((width,height), dtype = int)
@@ -129,7 +143,6 @@ def object_detection(original_obj, original_obj_pix):
 
 				if edge_pix[x,y] == 255 and labels_edge[x,y] == 0:
 					edge_labels2.append(edge_labels_data())
-					edge_labels.append([0,[x,x,y,y],0,0,0,(0,0)]) #(label,[minx,maxx,miny,maxy], #pixels,cumulative_x,cumulative_y,(center of mass xy))
 					edge_labels2[label2].minx(x)
 					edge_labels2[label2].maxx(x)
 					edge_labels2[label2].miny(y)
@@ -140,27 +153,19 @@ def object_detection(original_obj, original_obj_pix):
 					c, d = x, y
 					while dfs == 1 and len(stack) > 0:
 						labels_edge[c, d] = label2 * multiplier
-						edge_labels[label2 - 1][0] = label2 * multiplier
-						edge_labels[label2 - 1][2] += 1
-						edge_labels[label2 - 1][3] = edge_labels[label2 - 1][3] + c
-						edge_labels[label2 - 1][4] = edge_labels[label2 - 1][4] + d
 						edge_labels2[label2 - 1].label(label2 * multiplier)
 						edge_labels2[label2 - 1].pix_number(1)
 						edge_labels2[label2 - 1].cumulative_x(c)
 						edge_labels2[label2 - 1].cumulative_y(d)
 					
 						# min and max
-						if c < edge_labels[label2 - 1][1][0]:
-							edge_labels[label2 - 1][1][0] = c
+						if c < edge_labels2[label2 - 1]._minx:
 							edge_labels2[label2 - 1].minx(c)
-						if c > edge_labels[label2 - 1][1][1]:
-							edge_labels[label2 - 1][1][1] = c
+						if c > edge_labels2[label2 - 1]._maxx:
 							edge_labels2[label2 - 1].maxx(c)
-						if d < edge_labels[label2 - 1][1][2]:
-							edge_labels[label2 - 1][1][2] = d
+						if d < edge_labels2[label2 - 1]._miny:
 							edge_labels2[label2 - 1].miny(d)
-						if d > edge_labels[label2 - 1][1][3]:
-							edge_labels[label2 - 1][1][3] = d
+						if d > edge_labels2[label2 - 1]._maxy:
 							edge_labels2[label2 - 1].maxy(d)
 					
 						for b in range(-1, 2):
@@ -184,14 +189,25 @@ def object_detection(original_obj, original_obj_pix):
 							c, d = stack.pop()
 						remaining = 0
 				else:
-					if len(objects) == 0:
-						objects.append([original_obj_pix[x,y],[x,x,y,y],0,x,y,(0,0),0])
+					if len(objects2) == 0:
+						objects2.append(object_data())
+						num = original_obj_pix[x,y]
+						objects2[0].color(num)
+						objects2[0].minx(x)
+						objects2[0].maxx(x)
+						objects2[0].miny(y)
+						objects2[0].maxy(y)
 						c, d = x, y
 						dfs = 1
 						label += 1
 					elif labels[x,y] != label and edge_pix[x,y] != 255 and \
 						labels[x,y] == 0:
-						objects.append([original_obj_pix[x,y],[x,x,y,y],0,x,y,(0,0),0])
+						objects2.append(object_data())
+						objects2[label].color(original_obj_pix[x,y])
+						objects2[label].minx(x)
+						objects2[label].maxx(x)
+						objects2[label].miny(y)
+						objects2[label].maxy(y)
 						c, d = x, y
 						dfs = 1
 						label += 1
@@ -199,27 +215,22 @@ def object_detection(original_obj, original_obj_pix):
 						#break
 					else:
 						break
-				
-			
-					#print z_aux
-					#print stack
-					#print label
-					#print objects
+
 					while dfs == 1 and len(stack) > 0:
 						labels[c, d] = label
-						objects[label - 1][2] += 1
-						objects[label - 1][3] = objects[label - 1][3] + c
-						objects[label - 1][4] = objects[label - 1][4] + d
+						objects2[label - 1].pix_number(1)
+						objects2[label - 1].cumulative_x(c)
+						objects2[label - 1].cumulative_y(d)
 					
 						# min and max
-						if c < objects[label - 1][1][0]:
-							objects[label - 1][1][0] = c
-						if c > objects[label - 1][1][1]:
-							objects[label - 1][1][1] = c
-						if d < objects[label - 1][1][2]:
-							objects[label - 1][1][2] = d
-						if d > objects[label - 1][1][3]:
-							objects[label - 1][1][3] = d
+						if c < objects2[label - 1]._minx:
+							objects2[label - 1].minx(c)
+						if c > objects2[label - 1]._maxx:
+							objects2[label - 1].maxx(c)
+						if d < objects2[label - 1]._miny:
+							objects2[label - 1].miny(d)
+						if d > objects2[label - 1]._maxy:
+							objects2[label - 1].maxy(d)
 					
 						#print len(stack)
 						#counter += 1
@@ -233,7 +244,7 @@ def object_detection(original_obj, original_obj_pix):
 									d + b <= height - 1 and \
 									label != labels[c + a, d + b] and \
 									edge_pix[c + a, d + b] != 255 and \
-									original_obj_pix[c + a, d + b] == objects[label-1][0]: 
+									original_obj_pix[c + a, d + b] == objects2[label-1]._color: 
 										remaining += 1 #
 										c_aux, d_aux = c + a, d + b
 										a_aux, b_aux = a, b
@@ -252,16 +263,7 @@ def object_detection(original_obj, original_obj_pix):
 							c, d = stack.pop()
 							#print 'popping'
 						remaining = 0
-	print edge_labels[0]
-	print edge_labels2[0]._label
-	print edge_labels2[0]._minx
-	print edge_labels2[0]._maxx
-	print edge_labels2[0]._miny
-	print edge_labels2[0]._maxy
-	print edge_labels2[0]._pix_number
-	print edge_labels2[0]._cumulative_x
-	print edge_labels2[0]._cumulative_y
-	print edge_labels2[0]._center_mass
+
 	# Printing objects
 	for y in range(height):
 		for x in range(width):
@@ -280,57 +282,49 @@ def object_detection(original_obj, original_obj_pix):
 			#break
 
 	# Printing centers of mass of objects
-	for x in range(len(objects)):
+	for x in range(len(objects2)):
 		average_x, average_y = 0, 0
-		cumulative_x = objects[x][3]
-		cumulative_y = objects[x][4]
-		total_pix = objects[x][2]
+		cumulative_x = objects2[x]._cumulative_x
+		cumulative_y = objects2[x]._cumulative_y
+		total_pix = objects2[x]._pix_number
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
-		objects[x][5] = (average_x, average_y)
+		objects2[x].center_mass(average_x, average_y)
 		objs_pix[int(average_x), int(average_y)] = (0,255,0)
 		
 	# Printing centers of mass 2 (of contours)
-	for x in range(len(edge_labels)):
+	for x in range(len(edge_labels2)):
 		average_x, average_y = 0, 0
-		cumulative_x = edge_labels[x][3]
-		cumulative_y = edge_labels[x][4]
-		total_pix = edge_labels[x][2]
+		cumulative_x = edge_labels2[x]._cumulative_x
+		cumulative_y = edge_labels2[x]._cumulative_y
+		total_pix = edge_labels2[x]._pix_number
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
-		edge_labels[x][5] = (average_x, average_y)
+		edge_labels2[x].center_mass(average_x, average_y)
 		objs_pix[int(average_x), int(average_y)] = (255,0,0)
 
 	# Popping background from objects
-	for x in range(len(objects)):
-		if objects[x][0] == BG[0]:
-			background = objects.pop(x)
+	for x in range(len(objects2)):
+		if objects2[x]._color == BG[0]:
+			#background = objects.pop(x)
+			objects2.pop(x)
 			break
 
 	# Pairing edges and objects	together	
-	for x in range(len(objects)):
-		for y in range(len(edge_labels)):
+	for x in range(len(objects2)):
+		for y in range(len(edge_labels2)):
 			#found = 0
-			x1 = objects[x][5][0]
-			x2 = edge_labels[y][5][0]
-			y1 = objects[x][5][1]
-			y2 = edge_labels[y][5][1]
+			x1 = objects2[x]._minx
+			x2 = objects2[x]._maxx
+			y1 = objects2[y]._miny
+			y2 = objects2[y]._maxy
 			#print x1, x2, y1, y2
-			if abs(x1 - x2) < width * 0.05 and \
-			abs(y1 - y2) < height * 0.05:
-				objects[x][6] = y
+			if(x2 - x1) < width * 0.05 and \
+			abs(y2 - y1) < height * 0.05:
+				#objects[x][6] = y
+				objects2[x].label(y)
 				#found = 1
 				break
-
-	# Counting edge pixels and unlabelled edge pixels
-	edgepix, edgelabel = 0, 0
-	for y in range(height):
-		for x in range(width):
-			if edge_pix[x,y] == 255:
-				edgepix += 1
-				if labels_edge[x,y] == 0:
-					edgelabel += 1
-		
 
 
 
@@ -438,24 +432,7 @@ def object_detection(original_obj, original_obj_pix):
 					#segments.append([])
 				else:
 					break
-	'''
-	for x in range(len(segments)):
-		print 'Object %d' % x
-		for y in range(len(segments[x])):
-			print 'Segment %d' % y
-			print segments[x][y]
-	'''
-	#print len(segments[6])
-	#print len(segments[0])
-	#print len(segments)
-	#print segments
-	#time.sleep(1)
-	#print len(segments[0])
-	#print segments[0]
-	#time.sleep(1)
-	#print len(segments[0][0])
-	#print segments[0][0]
-	#time.sleep(1)
+
 	# Deleting small segments and false objects
 	for x in range(len(segments)):
 		#print 'Object %d' % x
@@ -468,13 +445,6 @@ def object_detection(original_obj, original_obj_pix):
 				#print 'Popping'
 			else:
 				number += -1
-	'''			
-	for x in range(len(segments)):
-		print 'Object %d' % x
-		for y in range(len(segments[x])):
-			print 'Segment %d' % y
-			print segments[x][y]
-	'''
 
 	# Counting sides of each object
 	sides = []
@@ -499,17 +469,22 @@ def object_detection(original_obj, original_obj_pix):
 	draw = ImageDraw.Draw(objs)
 	font = ImageFont.load_default()
 	detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],[(0,255,255),'P7']]
-	for z in range(len(objects)):
+	for z in range(len(objects2)):
 		number = sides[z] - 1
 		for x in range(4):
-			if x < 2:
-				for y in range(edge_labels[z][1][2], edge_labels[z][1][3]):
-					objs_pix[edge_labels[z][1][x],y] = detected[number][0]
-					
+			if x == 0:
+				for y in range(edge_labels2[z]._miny, edge_labels2[z]._maxy):
+					objs_pix[edge_labels2[z]._minx,y] = detected[number][0]
+			if x == 1:
+				for y in range(edge_labels2[z]._miny, edge_labels2[z]._maxy):
+					objs_pix[edge_labels2[z]._maxx,y] = detected[number][0]
+			if x == 2:
+				for y in range(edge_labels2[z]._minx, edge_labels2[z]._maxx):
+					objs_pix[y,edge_labels2[z]._miny] = detected[number][0]	
 			else:
-				for y in range(edge_labels[z][1][0], edge_labels[z][1][1]):
-					objs_pix[y,edge_labels[z][1][x]] = detected[number][0]
-			draw.text((objects[z][5]),detected[number][1],detected[number][0],font=font) #% detected[number][1]
+				for y in range(edge_labels2[z]._minx, edge_labels2[z]._maxx):
+					objs_pix[y,edge_labels2[z]._maxy] = detected[number][0]
+			draw.text((objects2[z]._center_mass),detected[number][1],detected[number][0],font=font)
 
 	objs.show()
 	return objs
@@ -524,32 +499,3 @@ if __name__ == "__main__":
 	
 	detected = object_detection(img,pixels)
 	detected.show
-	
-'''
-	# Getting background(BG) color according to the max number of pixels
-	colors = []
-	quantity = []
-	for y in range(height):
-		for x in range(width):
-			if len(colors) == 0:
-				colors.append(original_obj_pix[x,y])
-				quantity.append(1)
-			else:
-				for z in range(len(colors)):
-					if original_obj_pix[x,y] == colors[z]:
-						quantity[z] += 1
-						break
-					elif original_obj_pix[x,y] != colors[z] and \
-						z == len(colors) - 1:
-							colors.append(original_obj_pix[x,y])
-							quantity.append(1)
-
-	BG = []
-	for x in range(len(colors)):
-		if quantity[x] == max(quantity):
-			BG.append(colors[x])
-			BG.append(max(quantity))
-			quantity = []	# Deleting data
-			colors = []		# Deleting data
-			break
-'''
