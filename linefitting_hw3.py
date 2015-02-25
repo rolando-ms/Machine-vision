@@ -12,8 +12,25 @@ import os # to construct a path relative to this script
 #import matplotlib.pyplot as plt
 
 def linefitting(points):
-	
-	
+	# Initializing variables
+	sumx, sumy, sumxx, sumyy, sumxy = 0.0, 0.0, 0.0, 0.0, 0.0
+	alpha, beta, gamma = 0.0, 0.0, 0.0
+
+	# Calculating sums from edge pixels:
+	# Sum(x), Sum(y), Sum(x^2), Sum(y^2), Sum(x*y)
+	N = float(len(points))
+	for a in range(int(N)):
+		sumx += float(points[a][0])
+		sumy += float(points[a][1])
+		sumxx += (sumx * sumx)
+		sumyy += (sumy * sumy)
+		sumxy += (sumx * sumy)
+	print sumx, sumy, sumxx, sumyy, sumxy
+	# Calculating alpha, beta and gamma
+	alpha = sumxx - (pow(sumx,2) / N)
+	beta = sumxy - ((sumx * sumy) / N)
+	gamma = sumyy - (pow(sumy,2) / N)
+	print alpha, beta, gamma
 
 # Main function
 if __name__ == "__main__":
@@ -27,10 +44,13 @@ if __name__ == "__main__":
 	#print segment
 	
 	for x in range(len(segment)):
-		print 'Object %d' % x
+		#print 'Object %d' % x
 		for y in range(len(segment[x])):
-			print 'Segment %d' % y
-			print len(segment[x][y])
+			segment_points = segment[x][y]
+			if len(segment_points) > 10:
+				linefitting(segment_points)
+			#print 'Segment %d' % y
+			#print len(segment[x][y])
 			#for z in range(len(segment[x][y])):
 			#	print 'Points %d' % z
 	
