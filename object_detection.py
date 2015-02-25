@@ -28,7 +28,7 @@ class object_data:
 	
 	def color(self, colour):
 		self._color = colour
-		
+	'''	
 	def minx(self, minX):
 		self._minx = minX
 		
@@ -40,7 +40,7 @@ class object_data:
 		
 	def maxy(self, maxY):
 		self._maxy = maxY
-
+	'''
 	def pix_number(self, num_pix):
 		self._pix_number += num_pix
 		
@@ -75,7 +75,7 @@ class edge_labels_data:
 	
 	def label(self, current_label):
 		self._label = current_label
-		
+	'''
 	def minx(self, minX):
 		self._minx = minX
 		
@@ -87,7 +87,7 @@ class edge_labels_data:
 		
 	def maxy(self, maxY):
 		self._maxy = maxY
-		
+	'''	
 	def pix_number(self, num_pix):
 		self._pix_number += num_pix
 		
@@ -143,10 +143,10 @@ def object_detection(original_obj, original_obj_pix):
 
 				if edge_pix[x,y] == 255 and labels_edge[x,y] == 0:
 					edge_labels2.append(edge_labels_data())
-					edge_labels2[label2].minx(x)
-					edge_labels2[label2].maxx(x)
-					edge_labels2[label2].miny(y)
-					edge_labels2[label2].maxy(y)
+					edge_labels2[label2]._minx = x
+					edge_labels2[label2]._maxx = x
+					edge_labels2[label2]._miny = y
+					edge_labels2[label2]._maxy = y
 					dfs = 1
 					label2 += 1
 					multiplier = 20 # label 2 multiplier
@@ -154,9 +154,9 @@ def object_detection(original_obj, original_obj_pix):
 					while dfs == 1 and len(stack) > 0:
 						labels_edge[c, d] = label2 * multiplier
 						edge_labels2[label2 - 1].label(label2 * multiplier)
-						edge_labels2[label2 - 1].pix_number(1)
-						edge_labels2[label2 - 1].cumulative_x(c)
-						edge_labels2[label2 - 1].cumulative_y(d)
+						edge_labels2[label2 - 1]._pix_number += 1
+						edge_labels2[label2 - 1]._cumulative_x += c
+						edge_labels2[label2 - 1]._cumulative_y += d
 					
 						# min and max
 						if c < edge_labels2[label2 - 1]._minx:
@@ -193,10 +193,10 @@ def object_detection(original_obj, original_obj_pix):
 						objects2.append(object_data())
 						num = original_obj_pix[x,y]
 						objects2[0].color(num)
-						objects2[0].minx(x)
-						objects2[0].maxx(x)
-						objects2[0].miny(y)
-						objects2[0].maxy(y)
+						objects2[0]._minx = x
+						objects2[0]._maxx = x
+						objects2[0]._miny = y
+						objects2[0]._maxy = y
 						c, d = x, y
 						dfs = 1
 						label += 1
@@ -204,10 +204,10 @@ def object_detection(original_obj, original_obj_pix):
 						labels[x,y] == 0:
 						objects2.append(object_data())
 						objects2[label].color(original_obj_pix[x,y])
-						objects2[label].minx(x)
-						objects2[label].maxx(x)
-						objects2[label].miny(y)
-						objects2[label].maxy(y)
+						objects2[label]._minx = x
+						objects2[label]._maxx = x
+						objects2[label]._miny = y
+						objects2[label]._maxy = y
 						c, d = x, y
 						dfs = 1
 						label += 1
@@ -218,9 +218,9 @@ def object_detection(original_obj, original_obj_pix):
 
 					while dfs == 1 and len(stack) > 0:
 						labels[c, d] = label
-						objects2[label - 1].pix_number(1)
-						objects2[label - 1].cumulative_x(c)
-						objects2[label - 1].cumulative_y(d)
+						objects2[label - 1]._pix_number += 1
+						objects2[label - 1]._cumulative_x += c
+						objects2[label - 1]._cumulative_y += d
 					
 						# min and max
 						if c < objects2[label - 1]._minx:
@@ -286,6 +286,7 @@ def object_detection(original_obj, original_obj_pix):
 		average_x, average_y = 0, 0
 		cumulative_x = objects2[x]._cumulative_x
 		cumulative_y = objects2[x]._cumulative_y
+		#print cumulative_x, cumulative_y
 		total_pix = objects2[x]._pix_number
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
@@ -297,6 +298,7 @@ def object_detection(original_obj, original_obj_pix):
 		average_x, average_y = 0, 0
 		cumulative_x = edge_labels2[x]._cumulative_x
 		cumulative_y = edge_labels2[x]._cumulative_y
+		#print cumulative_x, cumulative_y
 		total_pix = edge_labels2[x]._pix_number
 		average_x = cumulative_x / total_pix
 		average_y = cumulative_y / total_pix
