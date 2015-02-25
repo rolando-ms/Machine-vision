@@ -1,6 +1,6 @@
 from lab import modules_lab as modlab # Here I have my lab modules
 from lecture import modules_lecture as modlec # Here I have my lecture modules
-from edge_detection import edge_detection
+from edge_detection_hw1 import edge_detection
 from PIL import Image
 from PIL import ImageFont # Use fonts
 from PIL import ImageDraw # Draw texts
@@ -385,8 +385,8 @@ def object_detection(original_obj, original_obj_pix):
 					objs_pix[y,edge_labels2[z]._maxy] = detected[number][0]
 			draw.text((objects2[z]._center_mass),detected[number][1],detected[number][0],font=font)
 
-	objs.show()
-	return objs
+	#objs.show()
+	return objs, segments
 
 # Main function
 if __name__ == "__main__":
@@ -396,5 +396,5 @@ if __name__ == "__main__":
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	detected = object_detection(img,pixels)
-	detected.show
+	detected, segment = object_detection(img,pixels)
+	detected.show()
