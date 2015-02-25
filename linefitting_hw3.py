@@ -25,12 +25,19 @@ def linefitting(points):
 		sumxx += (sumx * sumx)
 		sumyy += (sumy * sumy)
 		sumxy += (sumx * sumy)
-	print sumx, sumy, sumxx, sumyy, sumxy
+	#print sumx, sumy, sumxx, sumyy, sumxy
+	
 	# Calculating alpha, beta and gamma
-	alpha = sumxx - (pow(sumx,2) / N)
+	alpha = sumxx - ((sumx * sumx) / N)
 	beta = sumxy - ((sumx * sumy) / N)
-	gamma = sumyy - (pow(sumy,2) / N)
-	print alpha, beta, gamma
+	gamma = sumyy - ((sumy * sumy) / N)
+	#print alpha, beta, gamma
+	
+	# Arranging matrix and calculating eigenvalues
+	mat = np.array([[alpha,beta],
+					[beta,gamma]])
+	eigen = np.linalg.eigvals(mat)
+	print eigen
 
 # Main function
 if __name__ == "__main__":
