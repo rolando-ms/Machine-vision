@@ -336,6 +336,24 @@ def bg_color(original):
 			break
 	
 	return bg
+	
+#****************************
+# Refresh min and max module
+#****************************
+# This module refreshes the max and min values.
+def get_center_mass(object):
+	# Printing centers of mass of objects
+
+	averagex, averagey = 0, 0
+	cumulative_x = object._cumulative_x
+	cumulative_y = object._cumulative_y
+	#print cumulative_x, cumulative_y
+	total_pix = object._pix_number
+	averagex = cumulative_x / total_pix
+	averagey = cumulative_y / total_pix
+	#objects[x].center_mass(average_x, average_y)
+	#objs_pix[int(average_x), int(average_y)] = (0,255,0)
+	return averagex, averagey
 '''	
 def object_dfs():
 

@@ -40,7 +40,7 @@ class object_data:
 		
 	def maxy(self, maxY):
 		self._maxy = maxY
-	'''
+	
 	def pix_number(self, num_pix):
 		self._pix_number += num_pix
 		
@@ -49,6 +49,7 @@ class object_data:
 
 	def cumulative_y(self, cumulativey):
 		self._cumulative_y += cumulativey
+	'''
 		
 	def center_mass(self, centerx, centery):
 		self._center_mass.append(centerx)
@@ -87,7 +88,7 @@ class edge_labels_data:
 		
 	def maxy(self, maxY):
 		self._maxy = maxY
-	'''	
+	
 	def pix_number(self, num_pix):
 		self._pix_number += num_pix
 		
@@ -96,6 +97,7 @@ class edge_labels_data:
 
 	def cumulative_y(self, cumulativey):
 		self._cumulative_y += cumulativey
+	'''
 		
 	def center_mass(self, centerx, centery):
 		self._center_mass.append(centerx)
@@ -157,7 +159,19 @@ def object_detection(original_obj, original_obj_pix):
 						edge_labels2[label2 - 1]._pix_number += 1
 						edge_labels2[label2 - 1]._cumulative_x += c
 						edge_labels2[label2 - 1]._cumulative_y += d
-					
+						
+						'''
+						# Refreshing min and max values
+						edge_labels2[label2 - 1]._minx, 
+						edge_labels2[label2 - 1]._maxx, 
+						edge_labels2[label2 - 1]._miny, 
+						edge_labels2[label2 - 1]._maxy = modlec.refresh_min_max(c,
+						d, edge_labels2[label2 - 1]._minx, 
+						edge_labels2[label2 - 1]._maxx, 
+						edge_labels2[label2 - 1]._miny, 
+						edge_labels2[label2 - 1]._maxy)
+						
+						'''
 						# min and max
 						if c < edge_labels2[label2 - 1]._minx:
 							edge_labels2[label2 - 1]._minx = c
@@ -167,7 +181,7 @@ def object_detection(original_obj, original_obj_pix):
 							edge_labels2[label2 - 1]._miny = d
 						if d > edge_labels2[label2 - 1]._maxy:
 							edge_labels2[label2 - 1]._maxy = d
-					
+						
 						for b in range(-1, 2):
 							for a in range(-1, 2):
 								if  c + a >= 0 and \
@@ -222,6 +236,18 @@ def object_detection(original_obj, original_obj_pix):
 						objects2[label - 1]._cumulative_x += c
 						objects2[label - 1]._cumulative_y += d
 					
+						'''
+						# Refreshing min and max values
+						objects2[label - 1]._minx, 
+						objects2[label - 1]._maxx, 
+						objects2[label - 1]._miny, 
+						objects2[label - 1]._maxy = modlec.refresh_min_max(c,d, 
+						objects2[label - 1]._minx, 
+						objects2[label - 1]._maxx, 
+						objects2[label - 1]._miny, 
+						objects2[label - 1]._maxy)
+						
+						'''
 						# min and max
 						if c < objects2[label - 1]._minx:
 							objects2[label - 1]._minx = c
@@ -231,7 +257,7 @@ def object_detection(original_obj, original_obj_pix):
 							objects2[label - 1]._miny = d
 						if d > objects2[label - 1]._maxy:
 							objects2[label - 1]._maxy = d
-					
+						
 						#print len(stack)
 						#counter += 1
 						#print counter
@@ -280,7 +306,13 @@ def object_detection(original_obj, original_obj_pix):
 			#print 'select'
 			#print pixels[x,y]
 			#break
-
+	
+	# Calculating center of mass of objects
+	for x in range(len(objects2)):
+		average_x, average_y = modlec.get_center_mass(objects2[x])
+		objects2[x].center_mass(average_x, average_y)
+		objs_pix[int(average_x), int(average_y)] = (0,255,0)
+	'''
 	# Printing centers of mass of objects
 	for x in range(len(objects2)):
 		average_x, average_y = 0, 0
@@ -292,7 +324,13 @@ def object_detection(original_obj, original_obj_pix):
 		average_y = cumulative_y / total_pix
 		objects2[x].center_mass(average_x, average_y)
 		objs_pix[int(average_x), int(average_y)] = (0,255,0)
-		
+	'''
+	# Calculating center of mass of contours
+	for x in range(len(edge_labels2)):
+		average_x, average_y = modlec.get_center_mass(edge_labels2[x])
+		edge_labels2[x].center_mass(average_x, average_y)
+		objs_pix[int(average_x), int(average_y)] = (255,0,0)
+	'''	
 	# Printing centers of mass 2 (of contours)
 	for x in range(len(edge_labels2)):
 		average_x, average_y = 0, 0
@@ -304,7 +342,7 @@ def object_detection(original_obj, original_obj_pix):
 		average_y = cumulative_y / total_pix
 		edge_labels2[x].center_mass(average_x, average_y)
 		objs_pix[int(average_x), int(average_y)] = (255,0,0)
-
+	'''
 	# Popping background from objects
 	for x in range(len(objects2)):
 		if objects2[x]._color == BG[0]:
@@ -322,7 +360,7 @@ def object_detection(original_obj, original_obj_pix):
 			y2 = objects2[y]._maxy
 			#print x1, x2, y1, y2
 			if(x2 - x1) < width * 0.05 and \
-			abs(y2 - y1) < height * 0.05:
+			(y2 - y1) < height * 0.05:
 				#objects[x][6] = y
 				objects2[x].label(y)
 				#found = 1
