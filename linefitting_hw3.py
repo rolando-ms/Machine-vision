@@ -15,6 +15,7 @@ def linefitting(points):
 	# Initializing variables
 	sumx, sumy, sumxx, sumyy, sumxy = 0.0, 0.0, 0.0, 0.0, 0.0
 	alpha, beta, gamma = 0.0, 0.0, 0.0
+	sum, c = 0.0, 0.0
 
 	# Calculating sums from edge pixels:
 	# Sum(x), Sum(y), Sum(x^2), Sum(y^2), Sum(x*y)
@@ -33,11 +34,27 @@ def linefitting(points):
 	gamma = sumyy - ((sumy * sumy) / N)
 	#print alpha, beta, gamma
 	
-	# Arranging matrix and calculating eigenvalues
+	# Arranging matrix, calculating eigenvalues and choosing the smaller
+	# eigenvalue and the corresponding eigenvector
 	mat = np.array([[alpha,beta],
 					[beta,gamma]])
-	eigen = np.linalg.eigvals(mat)
-	print eigen
+	eigen_val_vec = np.linalg.eig(mat)
+	#print eigen_val_vec
+	#print eigen
+	if eigen_val_vec[0][0] < eigen_val_vec[0][1]:
+		eigval = eigen_val_vec[0][0]
+		eigvec = eigen_val_vec[1][:,0]
+	else:
+		eigval = eigen_val_vec[0][1]
+		eigvec = eigen_val_vec[1][:,1]
+	
+	# Calculating c from eigvec
+	for a in range(int(N)):
+		sum += eigvec[0] * points[a][0] + eigvec[1] * points[0][1]
+		
+	c = -(sum / N)
+	
+	print c
 
 # Main function
 if __name__ == "__main__":
