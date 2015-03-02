@@ -25,6 +25,7 @@ class object_data:
 		self._cumulative_x = 0
 		self._cumulative_y = 0
 		self._center_mass = []
+		self._sides = 0
 	
 	def color(self, colour):
 		self._color = colour
@@ -361,13 +362,13 @@ def object_detection(original_obj, original_obj_pix):
 	# sides < 3 ==> C (circle)
 	# sides =3 ==> T3 (Triangle)
 	# sides = 4 ==> P4 (Polygon)
-	# sides = 5 ==> P5 (Popygon), etc
+	# sides = 5 ==> P5 (Polygon), etc
 
 	draw = ImageDraw.Draw(objs)
 	font = ImageFont.load_default()
-	detected = [[(255,0,0),'C'],[(255,0,0),'C'],[(0,255,0),'T3'],
-	[(0,0,255),'P4'],[(255,255,0),'P5'],[(255,0,255),'P6'],
-	[(0,255,255),'P7']]
+	detected = [[(255,0,0),'C',0],[(255,0,0),'C',0],[(0,255,0),'T3',3],
+	[(0,0,255),'P4',4],[(255,255,0),'P5',5],[(255,0,255),'P6',6],
+	[(0,255,255),'P7',7]]
 	for z in range(len(objects2)):
 		number = sides[z] - 1
 		for x in range(4):
@@ -384,9 +385,10 @@ def object_detection(original_obj, original_obj_pix):
 				for y in range(edge_labels2[z]._minx, edge_labels2[z]._maxx):
 					objs_pix[y,edge_labels2[z]._maxy] = detected[number][0]
 			draw.text((objects2[z]._center_mass),detected[number][1],detected[number][0],font=font)
+			objects2[z]._sides = detected[number][2]
 
 	#objs.show()
-	return objs, segments, im3
+	return objs, segments, im3, objects2
 
 # Main function
 if __name__ == "__main__":
@@ -396,5 +398,5 @@ if __name__ == "__main__":
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	detected, segment, angles_norm = object_detection(img,pixels)
+	detected, segment, angles_norm, objs_data = object_detection(img,pixels)
 	detected.show()
