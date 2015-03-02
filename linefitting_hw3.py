@@ -3,33 +3,41 @@ from lecture import modules_lecture as modlec # Here I have my lecture modules
 #from edge_detection import edge_detection
 from object_detection_hw2 import object_detection
 from PIL import Image
-from PIL import ImageFont # Use fonts
-from PIL import ImageDraw # Draw texts
-import math
+#from PIL import ImageFont # Use fonts
+#from PIL import ImageDraw # Draw texts
+#import math
 import numpy as np
-import time # to use time.sleep('time in seconds')
-import os # to construct a path relative to this script
+#import time # to use time.sleep('time in seconds')
+#import os # to construct a path relative to this script
 import cv2 # Open cv library
 #import matplotlib.pyplot as plt
 
-def linefitting(points, imwidth, imheight):
+#---------------------
+# Line fitting module
+#---------------------
+# This module takes lists of points and then calculates its mean value
+# and returns the initial and end points of the segment.
 
-	sumx, sumy, N, initial, end = 0.0, 0.0, 0.0, 0.0, 0.0
+def linefitting(points, angles):
+
+	# Initializing values
+	sumx, sumy, sumxx, sumyy, sumxy = 0.0, 0.0, 0.0, 0.0, 0.0 
+	N, initial, end = 0.0, 0.0, 0.0
 	partial_segmentx, partial_segmenty = 0.0, 0.0
 	mean_point = [0,0]
 	xval, yval = [], []
 	N = len(points)
 	#print N
+	
 	# Mean point of segment
 	for a in range(int(N)):
 		sumx += points[a][0]
 		sumy += points[a][1]
 		xval.append(points[a][0])
 		yval.append(points[a][1])
-		
+	
 	mean_point = [sumx / N, sumy / N]
-	print mean_point
-	#return mean_point
+	#print mean_point
 	
 	# Max and min values
 	maxx = max(xval)
@@ -39,120 +47,65 @@ def linefitting(points, imwidth, imheight):
 	#print maxx, minx, maxy, miny
 	
 	# Initial and endpoints
+	# Taking max and min values to set the length of the segment
 	partial_segmentx = (maxx - minx) / 2
 	partial_segmenty = (maxy - miny) / 2
 	
-	initial = (int(mean_point[0] + partial_segmentx), 
-			   int(mean_point[1] + partial_segmenty))
-	end = (int(mean_point[0] - partial_segmentx), 
-		   int(mean_point[1] - partial_segmenty))
-		   
-	return initial, end
+	# Loading normalized angle values (0 - 255)
+	angles_vals = angles.load()
 	
-	'''
-	#----------------------
-	# Total Least Squares
-	#----------------------
-	# Initializing variables
-	sumx, sumy, sumxx, sumyy, sumxy = 0.0, 0.0, 0.0, 0.0, 0.0
-	alpha, beta, gamma = 0.0, 0.0, 0.0
-	sum, c = 0.0, 0.0
-
-	# Calculating sums from edge pixels:
-	# Sum(x), Sum(y), Sum(x^2), Sum(y^2), Sum(x*y)
-	N = float(len(points))
-	for a in range(int(N)):
-		sumx += float(points[a][0])
-		sumy += float(imheight - points[a][1])
-		sumxx += (sumx * sumx)
-		sumyy += (sumy * sumy)
-		sumxy += (sumx * sumy)
-	#print sumx, sumy, sumxx, sumyy, sumxy
+	# Converting to its "orthogonal vector" by adding 64 (90 degrees)
+	angle = (angles_vals[mean_point[0], mean_point[1]]) + 64
+	if angle > 255:
+		angle = angle - 255
+	#print angle
 	
-	# Calculating alpha, beta and gamma
-	alpha = sumxx - ((sumx * sumx) / N)
-	beta = sumxy - ((sumx * sumy) / N)
-	gamma = sumyy - ((sumy * sumy) / N)
-	#print alpha, beta, gamma
-	
-	# Arranging matrix, calculating eigenvalues and choosing the smaller
-	# eigenvalue and the corresponding eigenvector. Eigenvector = norm
-	mat = np.array([[alpha,beta],
-					[beta,gamma]])
-	eigen_val_vec = np.linalg.eig(mat)
-	#print eigen_val_vec
-	#print eigen
-	if eigen_val_vec[0][0] < eigen_val_vec[0][1]:
-		eigval = eigen_val_vec[0][0]
-		eigvec = eigen_val_vec[1][:,0]
+	# Decision rules for the initial and end points of each segment.
+	# If the angle is in the first and third quadrant the partial
+	# segments are added or taken away to the initial and end points
+	# respectively. If not, the add and subtract are mixed.
+	if (angle >= 0 and angle <= 63) or \
+	(angle >= 128 and angle <= 191):
+		initial = (int(mean_point[0] + partial_segmentx), 
+				   int(mean_point[1] + partial_segmenty))
+		end = (int(mean_point[0] - partial_segmentx), 
+		       int(mean_point[1] - partial_segmenty))
 	else:
-		eigval = eigen_val_vec[0][1]
-		eigvec = eigen_val_vec[1][:,1]
-	
-	# Calculating c from eigvec
-	for a in range(int(N)):
-		sum += eigvec[0] * points[a][0] + eigvec[1] * points[a][1]
-		
-	c = -(sum / N)
-	#print 'C value:'
-	#print c
-	
-	# A point in the line
-	point = -c * eigvec
-	print point
-	
-	# Orthogonal vector
-	ortho = np.array([[eigvec[1]],[-eigvec[0]]])
-	
-	# Tau values
-	taus = []
-	for a in range(int(N)):
-		# Dot product between points and normal
-		taus.append((points[a][0] * eigvec[0]) + (points[a][1] + eigvec[1]))
-	
-	#print taus
-	# Max and min taus
-	taumin = min(taus)
-	taumax = max(taus)
-	
-	# Initial and end points of a segment
-	#print 'ortho[0]'
-	#print ortho[0]
-	#print 'ortho[1]'
-	#print ortho[1]
-	initial = (point[0] + taumin * ortho[0], point[1] + taumin * ortho[1])
-	end = (point[0] + taumax * ortho[0], point[1] + taumax * ortho[1])
-	
-	#return initial, end
-	'''
+		initial = (int(mean_point[0] + partial_segmentx), 
+				   int(mean_point[1] - partial_segmenty))
+		end = (int(mean_point[0] - partial_segmentx), 
+		       int(mean_point[1] + partial_segmenty))
 
+  
+	return initial, end
+
+	
 # Main function
 if __name__ == "__main__":
 	
 	imgspath = 'benchmark_imgs/'
-	name = 'triangle.png'
+	name = 'figures.png'
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	objects, segment = object_detection(img,pixels)
+	objects, segment, angles_norm = object_detection(img,pixels)
 	#print segment
 	
-	# Numpy array
+	# Numpy array to store fitted lines
 	width, height = objects.size
-	img2 = np.zeros((height,width,3), np.uint8)
+	lines = np.zeros((height,width,3), np.uint8)
 	
+	# Taking all segments and running line fitting
 	for x in range(len(segment)):
-		#print 'Object %d' % x
 		for y in range(len(segment[x])):
 			segment_points = segment[x][y]
 			if len(segment_points) > 10:
-				#linefitting(segment_points, width, height)
-				inipoint, endpoint = linefitting(segment_points, width, height)
-				cv2.line(img2, inipoint, endpoint,(0,255,255),1)
+				inipoint, endpoint = linefitting(segment_points, angles_norm)
+				# Drawing fitted lines into lines array 
+				cv2.line(lines, inipoint, endpoint,(0,255,255),1)
 	
-	#img = linefitting(segment)
-	
+	# Showing results
 	objects.show()
-	cv2.imshow('image',img2)
+	cv2.imshow('image',lines)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()

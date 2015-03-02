@@ -386,7 +386,7 @@ def object_detection(original_obj, original_obj_pix):
 			draw.text((objects2[z]._center_mass),detected[number][1],detected[number][0],font=font)
 
 	#objs.show()
-	return objs, segments
+	return objs, segments, im3
 
 # Main function
 if __name__ == "__main__":
@@ -396,5 +396,5 @@ if __name__ == "__main__":
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	detected, segment = object_detection(img,pixels)
+	detected, segment, angles_norm = object_detection(img,pixels)
 	detected.show()
