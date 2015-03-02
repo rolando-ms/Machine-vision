@@ -10,9 +10,9 @@ Repository of the Machine vision lecture + Lab (1535382)
 Some other modules used are located in subfolders.
 
 The project was created and tested with the following programs and library versions:
-*Python 2.7.5
-*Pillow 2.2.1
-*cmake 2.8.11.2
-*Matplotlib 1.4.2
-*Numpy 1.9.0
+* Python 2.7.5
+* Pillow 2.2.1
+* cmake 2.8.11.2
+* Matplotlib 1.4.2
+* Numpy 1.9.0
 (All of them in 32 bits version)
