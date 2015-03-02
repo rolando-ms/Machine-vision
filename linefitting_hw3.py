@@ -88,7 +88,7 @@ if __name__ == "__main__":
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	objects, segment, angles_norm = object_detection(img,pixels)
+	objects, segment, angles_norm, objs_data = object_detection(img,pixels)
 	#print segment
 	
 	# Numpy array to store fitted lines
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 	for x in range(len(segment)):
 		for y in range(len(segment[x])):
 			segment_points = segment[x][y]
-			if len(segment_points) > 10:
+			if len(segment_points) > 10 and objs_data[x]._sides != 0:
 				inipoint, endpoint = linefitting(segment_points, angles_norm)
 				# Drawing fitted lines into lines array 
 				cv2.line(lines, inipoint, endpoint,(0,255,255),1)
