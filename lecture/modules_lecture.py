@@ -7,6 +7,17 @@ import numpy as np
 #************************
 # This class includes different masks.
 class masks():
+
+	# Sharpen mask
+	sharp1 = np.array([[-1,-1,-1],
+					  [-1, 9,-1],
+					  [-1,-1,-1]])
+					  
+	# Sharpen mask 2 (Shows edges excessively)
+	sharp2 = np.array([[1,1,1],
+					  [1,-7,1],
+					  [1,1,1]])
+	
 	# Gaussian mask (for smoothing)
 	gauss = np.array([[0,1,2,1,0],
 					  [1,3,5,3,1],
@@ -187,14 +198,17 @@ def euclidean_dist(xval, yval):
 # image with normalized values (0-255)
 
 def normalize_edge(magnitude, image_pix, imheight, imwidth, mini, maxi):
-	#image = Image.new('L', (width,height), 'black')
-	#image_pix = image.load()
-	#imheight, imwidth = image.size[1], image.size[0]
-	for y in range(imheight):
-		for x in range(imwidth):
-			image_pix[x,y] = (magnitude[x,y] - mini) * (255 / maxi)
-			magnitude[x,y] = image_pix[x,y]
-	
+	if (maxi - mini) > 255:
+		for y in range(imheight):
+			for x in range(imwidth):
+				image_pix[x,y] = (magnitude[x,y] - mini) * (255 / maxi)
+				magnitude[x,y] = image_pix[x,y]
+	else:
+		difference = maxi - mini
+		for y in range(imheight):
+			for x in range(imwidth):
+				image_pix[x,y] = int((magnitude[x,y] - mini) * (255.0 / float(difference)))
+				magnitude[x,y] = image_pix[x,y]
 	return magnitude, image_pix
 			
 	
@@ -202,7 +216,7 @@ def normalize_edge(magnitude, image_pix, imheight, imwidth, mini, maxi):
 #******************
 # Histogram module
 #******************
-# This module creates a histogram for a grey image and initializes 
+# This module creates a histogram for a gray image and initializes 
 # it's values.
 
 def create_histogram(hist_len, image, imheight, imwidth):
@@ -338,7 +352,7 @@ def bg_color(original):
 	return bg
 	
 #****************************
-# Refresh min and max module
+# Center of mass module
 #****************************
 # Given the max, min and total values,this module calculates 
 # the center of mass and returns the coordinates.
