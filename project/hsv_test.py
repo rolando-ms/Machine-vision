@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from PIL import Image
+import time
 
 class circle_data:
 	data = 'color, min_max, pix_number, cumulative_x, cumulative_y \
@@ -16,7 +18,7 @@ class circle_data:
 		self._cumulative_x = 0
 		self._cumulative_y = 0
 		self._center_mass = []
-		#self._sides = 0
+		self._correspondence = 0
 
 def assignment(colour,minx, miny, maxx, maxy, pix_number,
 cumulative_x,cumulative_y):
@@ -70,26 +72,85 @@ def print_box(image, data):
 			for y in range(data._minx, data._maxx):
 				image[y,data._maxy] = (0,255,0)
 	return image
+	
+def DFS(image, labels2, x2, y2, count):
+	stack = [[x2,y2]]
+	count += 1
+	remaining = 0
+	first_time = 0
+	count_aux = 0
+	while len(stack) > 0:
+		#dfs = 1
+		if first_time == 0:
+			c, d = x2, y2
+			first_time = 1
+		#else:
+		#	c, d = c_aux, d_aux
+		
+		#while dfs == 1 and len(stack) > 0:
+		labels2[c, d] = count
+		count_aux += 1
+		#print count
+		# Analysing remaining neighbors
+		for b in range(-1, 2):
+			for a in range(-1, 2):
+				if  c + a >= 0 and \
+					c + a <= width - 1 and \
+					d + b >= 0 and \
+					d + b <= height - 1 and \
+					labels2[c + a, d + b] == 0 and \
+					image[c + a, d + b] > 0:
+						#print 'DOUBLE FOR'
+						remaining += 1
+						c_aux, d_aux = c + a, d + b
+						a_aux, b_aux = a, b
+						#print remaining
+						#print c_aux, d_aux
+						#if c_aux == 14 and d_aux == 45:
+						#	print image[c_aux, d_aux], labels[c_aux, d_aux]
+	
+		if remaining > 1:
+			#print 'APPEND'
+			stack.append([c + a_aux,d + b_aux])
+			c, d = c_aux, d_aux
+		elif remaining == 1:
+			#print 'TAKE'
+			c, d = c_aux, d_aux
+		else:
+			#print 'POP'
+			c, d = stack.pop()
+		remaining = 0
+		
+		#if count_aux <= 20:
+		#		count += -1
+		#print remaining
+		#counter += 1
+		#print stack
+	#else:
+	#	break
+	return labels2, count
 
 # Main function
 if __name__ == "__main__":
+	# Number of robots
+	bot_num = 3
+	
 	# Colors structure
 	colors = []
-	colors.append(circle_data())
-	colors.append(circle_data())
-	colors.append(circle_data())
+	for x in range(bot_num):
+		colors.append(circle_data())
 	
 	# Open image
 	img = cv2.imread('equ_3.png')
-	width, heigth, depth = img.shape
-	#print width, heigth
+	width, height,depth = img.shape
+	print width, height
 
 	# HSV image
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 	# Create a black image, a window
-	#hsv = np.zeros((width,heigth,3), np.uint8)
-	#opening = np.zeros((width,heigth*4,3), np.uint8)
+	#hsv = np.zeros((width,height,3), np.uint8)
+	#opening = np.zeros((width,height*4,3), np.uint8)
 	#cv2.namedWindow('hsv')
 	#cv2.namedWindow('max')
 	#erode_mask = img2  
@@ -137,6 +198,9 @@ if __name__ == "__main__":
 	#green_opening = cv2.dilate(green_opening2, kernel, iterations=2)
 	#blue_opening = cv2.dilate(blue_opening2, kernel, iterations=2)
 	
+	width2, height2 = red_opening.shape
+	print width2, height2
+	
 	'''
 	# Showing opening images
 	cv2.imshow('red open',red_opening)
@@ -166,9 +230,10 @@ if __name__ == "__main__":
 	'''
 	
 	# Getting color data
-	for y in range(heigth):
+	for y in range(height):
 		for x in range(width):
-			#print y , x
+			#print width, height
+			#print x,y
 			if red_opening[x,y] > 0:
 				pixels_red += 1
 				cumulative_x_red += x
@@ -234,12 +299,109 @@ if __name__ == "__main__":
 				for y in range(colors[x]._minx, colors[x]._maxx):
 					img2[y,colors[x]._maxy] = (0,255,0)
 		'''
-		#cv2.rectangle(img2,(colors[x]._minx, colors[x]._miny),(
-		#colors[x]._maxx, colors[x]._maxy),(0,255,0),1)
 
-	cv2.imshow('center of mass',img2)
-	cv2.waitKey(0)
-	#cv2.imshow('bounding boxes',img)
+	#cv2.imshow('center of mass',img2)
 	#cv2.waitKey(0)
 	
+	# Yellow color structure
+	yellow_colors = []
+	for x in range(bot_num):
+		yellow_colors.append(circle_data())
+	
+	# DFS for yellow color
+	counter = 0
+	labels = np.zeros((width,height), np.uint8)
+	#width, height= labels.shape
+	#print width, height
+	first = 0
+	for y in range(height):
+		for x in range(width):
+			if yellow_opening[x,y] > 0 and labels[x,y] == 0:
+				labels, counter = DFS(yellow_opening, labels, x, y, counter)
+	
+	#np.set_printoptions(threshold='nan')
+	#print labels
+	
+	pixels_1, pixels_2, pixels_3 = 0, 0, 0
+	cumulative_x_1, cumulative_x_2, cumulative_x_3 = 0, 0, 0
+	cumulative_y_1, cumulative_y_2, cumulative_y_3 = 0, 0, 0
+	minx_1, miny_1, maxx_1, maxy_1 = 0, 0, 0, 0
+	minx_2, miny_2, maxx_2, maxy_2 = 0, 0, 0, 0
+	minx_3, miny_3, maxx_3, maxy_3 = 0, 0, 0, 0
+	
+	
+	test = Image.new('L', (height, width), "black")
+	test_pix = test.load()
+	print width, height
+	
+	for y in range(height):
+		for x in range(width):
+			if labels[x,y] > 0:
+				test_pix[x,y] = labels[x,y] * 20
+	test.show()
+	
+	test = [0]
+	for y in range(height):
+		for x in range(width):
+			if labels[x,y] > 0:
+				for z in range(len(test)):
+					if labels[x,y] == test[z]:
+						break
+					if z == len(test) - 1 and labels[x,y] != test[z]:
+						test.append(labels[x,y])
+	print test
+	
+	# Getting 
+	for y in range(height):
+		for x in range(width):
+			#print y , x
+			if labels[x,y] == 1:
+				pixels_1 += 1
+				cumulative_x_1 += x
+				cumulative_y_1 += y
+				minx_1, miny_1, maxx_1, maxy_1 = limits(
+				x,y,minx_1,miny_1,maxx_1,maxy_1)
+			
+			if labels[x,y] == 2:
+				pixels_2 += 1
+				cumulative_x_2 += x
+				cumulative_y_2 += y
+				minx_2, miny_2, maxx_2, maxy_2 = limits(
+				x,y,minx_2,miny_2,maxx_2,maxy_2)
+			
+			if labels[x,y] == 3:
+				pixels_3 += 1
+				cumulative_x_3 += x
+				cumulative_y_3 += y
+				minx_3, miny_3, maxx_3, maxy_3 = limits(
+				x,y,minx_3,miny_3,maxx_3,maxy_3)
+	
+	print pixels_1, pixels_2, pixels_3
+	
+	# Assigning color data to list
+	# Yellow 1
+	yellow_colors[0] = assignment(yellow_colors[0], minx_1, miny_1, maxx_1, maxy_1,
+	pixels_1, cumulative_x_1, cumulative_y_1)
+	print yellow_colors[0]._center_mass
+	# Yellow 2
+	yellow_colors[1] = assignment(yellow_colors[1], minx_2, miny_2, maxx_2, 
+	maxy_2, pixels_2, cumulative_x_2, cumulative_y_2)
+	print yellow_colors[1]._center_mass 
+	# Yellow 3
+	yellow_colors[2] = assignment(yellow_colors[2], minx_3, miny_3, maxx_3, 
+	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
+	print yellow_colors[2]._center_mass
+	
+	# Showing centers of mass on a new image and bounding boxes
+	img2 = cv2.imread('equ_3.png')
+	for x in range(len(yellow_colors)):
+		#print yellow_colors[x]._minx, yellow_colors[x]._miny, yellow_colors[x]._maxx, \
+		#yellow_colors[x]._maxy
+		img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,0)
+		img2 = print_box(img2,yellow_colors[x])
+	
+	cv2.imshow('center of mass',img2)
+	cv2.waitKey(0)
+	
 	cv2.destroyAllWindows()
+	
