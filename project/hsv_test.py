@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
+import math
 from PIL import Image
-import time
+from PIL import ImageFont # Use fonts
+from PIL import ImageDraw # Draw texts
+#import time
 
 class circle_data:
 	data = 'color, min_max, pix_number, cumulative_x, cumulative_y \
-	center_mass'
+	center_mass, correspondence, orientation'
 	
 	def __init__(self):
 		#self.object = 'object %d' %number
@@ -19,6 +22,7 @@ class circle_data:
 		self._cumulative_y = 0
 		self._center_mass = []
 		self._correspondence = 0
+		self._orientation = 0
 
 def assignment(colour,minx, miny, maxx, maxy, pix_number,
 cumulative_x,cumulative_y):
@@ -40,11 +44,11 @@ def limits(a,b,minx, miny, maxx, maxy):
 	else:
 		if a < minx:
 			minx = a
-		if a > maxx:
+		elif a > maxx:
 			maxx = a
 		if b < miny:
 			miny = b
-		if b > maxy:
+		elif b > maxy:
 			maxy = b
 	return minx, miny, maxx, maxy
 		
@@ -57,20 +61,20 @@ def get_center_mass(object):
 	averagey = cumulative_y / total_pix
 	return averagex, averagey
 	
-def print_box(image, data):
+def print_box(image, data, box_color):
 	for z in range(4):
 		if z == 0:
 			for y in range(data._miny, data._maxy):
-				image[data._minx,y] = (0,255,0)
+				image[data._minx,y] = box_color#(0,255,0)
 		if z == 1:
 			for y in range(data._miny, data._maxy):
-				image[data._maxx,y] = (0,255,0)
+				image[data._maxx,y] = box_color#(0,255,0)
 		if z == 2:
 			for y in range(data._minx, data._maxx):
-				image[y,data._miny] = (0,255,0)	
+				image[y,data._miny] = box_color#(0,255,0)	
 		else:
 			for y in range(data._minx, data._maxx):
-				image[y,data._maxy] = (0,255,0)
+				image[y,data._maxy] = box_color#(0,255,0)
 	return image
 	
 def DFS(image, labels2, x2, y2, count):
@@ -129,9 +133,29 @@ def DFS(image, labels2, x2, y2, count):
 	#else:
 	#	break
 	return labels2, count
+	
+def euclidean_dist(xy_vals1, xy_vals2):
+	#print xy_vals1, xy_vals2
+	xval = abs(xy_vals1[0] - xy_vals2[0])
+	yval = abs(xy_vals1[1] - xy_vals2[1])
+	xpow = pow(xval, 2)
+	ypow = pow(yval, 2)
+	magnitude = math.sqrt(xpow + ypow)
+	return magnitude , xval, yval
 
+'''	
+def angle(xval, yval):
+	xval = abs(xy_vals1[0] - xy_vals2[0])
+	yval = abs(xy_vals1[1] - xy_vals2[1])
+	xpow = pow(xval, 2)
+	ypow = pow(yval, 2)
+	magnitude = math.sqrt(xpow + ypow)
+	return magnitude
+'''
 # Main function
 if __name__ == "__main__":
+	
+	
 	# Number of robots
 	bot_num = 3
 	
@@ -141,9 +165,9 @@ if __name__ == "__main__":
 		colors.append(circle_data())
 	
 	# Open image
-	img = cv2.imread('equ_3.png')
+	img = cv2.imread('equ_3xl.png')
 	width, height,depth = img.shape
-	print width, height
+	#print width, height
 
 	# HSV image
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -198,8 +222,8 @@ if __name__ == "__main__":
 	#green_opening = cv2.dilate(green_opening2, kernel, iterations=2)
 	#blue_opening = cv2.dilate(blue_opening2, kernel, iterations=2)
 	
-	width2, height2 = red_opening.shape
-	print width2, height2
+	#width2, height2 = red_opening.shape
+	#print width2, height2
 	
 	'''
 	# Showing opening images
@@ -214,7 +238,28 @@ if __name__ == "__main__":
 	#cv2.imshow('image',hsv)
 	#cv2.waitKey(0)
 	'''
+	e1 = cv2.getTickCount()
+	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
+	for y in range(height):
+		for x in range(width):
+			if red_opening[x,y] > 0 or green_opening[x,y] > 0 or \
+			blue_opening[x,y] > 0 or yellow_opening[x,y] > 0:
+				if rel_maxx == 0 and rel_maxy == 0 and \
+				rel_minx == 0 and rel_miny == 0:
+					rel_maxx, rel_minx = x, x
+					rel_maxy, rel_miny = y, y
+				else:
+					if x < rel_minx:
+						rel_minx = x
+					elif x > rel_maxx:
+						rel_maxx = x
+					if y < rel_miny:
+						rel_miny = y
+					elif y > rel_maxy:
+						rel_maxy = y
+						
 	
+					
 	pixels_red, pixels_green, pixels_blue = 0, 0, 0
 	cumulative_x_red, cumulative_x_green, cumulative_x_blue = 0, 0, 0
 	cumulative_y_red, cumulative_y_green, cumulative_y_blue = 0, 0, 0
@@ -230,14 +275,29 @@ if __name__ == "__main__":
 	'''
 	
 	# Getting color data
-	for y in range(height):
-		for x in range(width):
+	for y in range(rel_miny, rel_maxy):
+		for x in range(rel_minx, rel_maxx):
 			#print width, height
 			#print x,y
 			if red_opening[x,y] > 0:
 				pixels_red += 1
 				cumulative_x_red += x
 				cumulative_y_red += y
+				'''
+				if minx_red == 0 and miny_red == 0 and \
+				maxx_red == 0 and maxy_red == 0:
+					minx_red, maxx_red = x, x
+					miny_red, maxy_red = y, y
+				else:
+					if x < minx_red:
+						minx_red = x
+					elif x > maxx_red:
+						maxx_red = x
+					if y < miny_red:
+						miny_red = y
+					elif y > maxy_red:
+						maxy_red = y
+				'''
 				minx_red, miny_red, maxx_red, maxy_red = limits(
 				x,y,minx_red,miny_red,maxx_red,maxy_red)
 			
@@ -245,6 +305,21 @@ if __name__ == "__main__":
 				pixels_green += 1
 				cumulative_x_green += x
 				cumulative_y_green += y
+				'''
+				if minx_green == 0 and miny_green == 0 and \
+				maxx_green == 0 and maxy_green == 0:
+					minx_green, maxx_green = x, x
+					miny_green, maxy_green = y, y
+				else:
+					if x < minx_green:
+						minx_green = x
+					elif x > maxx_green:
+						maxx_green = x
+					if y < miny_green:
+						miny_green = y
+					elif y > maxy_green:
+						maxy_green = y
+				'''
 				minx_green, miny_green, maxx_green, maxy_green = limits(
 				x,y,minx_green,miny_green,maxx_green,maxy_green)
 			
@@ -252,9 +327,24 @@ if __name__ == "__main__":
 				pixels_blue += 1
 				cumulative_x_blue += x
 				cumulative_y_blue += y
+				'''
+				if minx_blue == 0 and miny_blue == 0 and \
+				maxx_blue == 0 and maxy_blue == 0:
+					minx_blue, maxx_blue = x, x
+					miny_blue, maxy_blue = y, y
+				else:
+					if x < minx_blue:
+						minx_blue = x
+					elif x > maxx_blue:
+						maxx_blue = x
+					if y < miny_blue:
+						miny_blue = y
+					elif y > maxy_blue:
+						maxy_blue = y
+				'''
 				minx_blue, miny_blue, maxx_blue, maxy_blue = limits(
 				x,y,minx_blue,miny_blue,maxx_blue,maxy_blue)
-				
+			
 	#print pixels_red, pixels_green, pixels_blue
 	#print cumulative_x_red, cumulative_x_green, cumulative_x_blue
 	#print cumulative_y_red, cumulative_y_green, cumulative_y_blue
@@ -277,12 +367,13 @@ if __name__ == "__main__":
 	#print colors[2]._center_mass
 	
 	# Showing centers of mass on a new image and bounding boxes
-	img2 = cv2.imread('equ_3.png')
+	img2 = cv2.imread('equ_3xl.png')
+	color = (0,255,0)
 	for x in range(len(colors)):
 		#print colors[x]._minx, colors[x]._miny, colors[x]._maxx, \
 		#colors[x]._maxy
 		img2[colors[x]._center_mass[0], colors[x]._center_mass[1]] = (0,255,0)
-		img2 = print_box(img2,colors[x])
+		img2 = print_box(img2,colors[x],color)
 		'''
 		# Can save 0.0002 seconds
 		for z in range(4):
@@ -314,8 +405,8 @@ if __name__ == "__main__":
 	#width, height= labels.shape
 	#print width, height
 	first = 0
-	for y in range(height):
-		for x in range(width):
+	for y in range(rel_miny, rel_maxy):
+		for x in range(rel_minx, rel_maxx):
 			if yellow_opening[x,y] > 0 and labels[x,y] == 0:
 				labels, counter = DFS(yellow_opening, labels, x, y, counter)
 	
@@ -329,7 +420,7 @@ if __name__ == "__main__":
 	minx_2, miny_2, maxx_2, maxy_2 = 0, 0, 0, 0
 	minx_3, miny_3, maxx_3, maxy_3 = 0, 0, 0, 0
 	
-	
+	'''
 	test = Image.new('L', (height, width), "black")
 	test_pix = test.load()
 	print width, height
@@ -350,10 +441,11 @@ if __name__ == "__main__":
 					if z == len(test) - 1 and labels[x,y] != test[z]:
 						test.append(labels[x,y])
 	print test
+	'''
 	
-	# Getting 
-	for y in range(height):
-		for x in range(width):
+	# Getting limits of yellow colors
+	for y in range(rel_miny, rel_maxy):
+		for x in range(rel_minx, rel_maxx):
 			#print y , x
 			if labels[x,y] == 1:
 				pixels_1 += 1
@@ -376,32 +468,66 @@ if __name__ == "__main__":
 				minx_3, miny_3, maxx_3, maxy_3 = limits(
 				x,y,minx_3,miny_3,maxx_3,maxy_3)
 	
-	print pixels_1, pixels_2, pixels_3
+	#print pixels_1, pixels_2, pixels_3
 	
 	# Assigning color data to list
 	# Yellow 1
 	yellow_colors[0] = assignment(yellow_colors[0], minx_1, miny_1, maxx_1, maxy_1,
 	pixels_1, cumulative_x_1, cumulative_y_1)
-	print yellow_colors[0]._center_mass
+	#print yellow_colors[0]._center_mass
 	# Yellow 2
 	yellow_colors[1] = assignment(yellow_colors[1], minx_2, miny_2, maxx_2, 
 	maxy_2, pixels_2, cumulative_x_2, cumulative_y_2)
-	print yellow_colors[1]._center_mass 
+	#print yellow_colors[1]._center_mass 
 	# Yellow 3
 	yellow_colors[2] = assignment(yellow_colors[2], minx_3, miny_3, maxx_3, 
 	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
-	print yellow_colors[2]._center_mass
+	#print yellow_colors[2]._center_mass
 	
 	# Showing centers of mass on a new image and bounding boxes
-	img2 = cv2.imread('equ_3.png')
+	#img2 = cv2.imread('equ_3.png')
+	color = (0,255,255)
 	for x in range(len(yellow_colors)):
 		#print yellow_colors[x]._minx, yellow_colors[x]._miny, yellow_colors[x]._maxx, \
 		#yellow_colors[x]._maxy
-		img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,0)
-		img2 = print_box(img2,yellow_colors[x])
+		img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,255)
+		img2 = print_box(img2,yellow_colors[x],color)
 	
+	#cv2.imshow('center of mass',img2)
+	#cv2.waitKey(0)
+		
+	# Choosing correspondence and calculating orientation
+	min = 0
+	dist = 0
+	for x in range(len(yellow_colors)):
+		for y in range(len(colors)):
+			distance, x_val, y_val = euclidean_dist(yellow_colors[x]._center_mass, colors[y]._center_mass)
+			#print distance
+			if y == 0:
+				min = 0
+				dist = distance
+				yellow_colors[x]._correspondence = y
+				angle_rad = math.atan2(y_val, x_val)
+				angle_deg = math.degrees(angle_rad)
+				colors[y]._orientation = int(angle_deg)
+			elif dist < distance:
+				min = x
+				dist = distance
+				yellow_colors[x]._correspondence = y
+				angle_rad = math.atan2(y_val, x_val)
+				angle_deg = math.degrees(angle_rad)
+				colors[y]._orientation = int(angle_deg)
+		colors[y]._correspondence = min
+	'''
+	draw = ImageDraw.Draw(img2)
+	font = ImageFont.load_default()
+	for x in range(len(colors)):
+		draw.text((colors[x]._center_mass),(colors[x]._center_mass[0], colors[x]._center_mass[1]), (0,255,255),font=font)
+	'''
+	e2 = cv2.getTickCount()
+	time = (e2 - e1) / cv2.getTickFrequency()
+	print time	
 	cv2.imshow('center of mass',img2)
 	cv2.waitKey(0)
 	
 	cv2.destroyAllWindows()
-	
