@@ -1,9 +1,7 @@
+# -*- coding: utf-8 -*-
 import cv2
 import numpy as np
 import math
-from PIL import Image
-from PIL import ImageFont # Use fonts
-from PIL import ImageDraw # Draw texts
 #import time
 
 class circle_data:
@@ -141,7 +139,7 @@ def euclidean_dist(xy_vals1, xy_vals2):
 	xpow = pow(xval, 2)
 	ypow = pow(yval, 2)
 	magnitude = math.sqrt(xpow + ypow)
-	return magnitude , xval, yval
+	return magnitude
 
 '''	
 def angle(xval, yval):
@@ -154,7 +152,7 @@ def angle(xval, yval):
 '''
 # Main function
 if __name__ == "__main__":
-	
+	e1 = cv2.getTickCount()
 	
 	# Number of robots
 	bot_num = 3
@@ -165,7 +163,8 @@ if __name__ == "__main__":
 		colors.append(circle_data())
 	
 	# Open image
-	img = cv2.imread('equ_3xl.png')
+	img_name = 'equ_3xl.png'
+	img = cv2.imread(img_name)
 	width, height,depth = img.shape
 	#print width, height
 
@@ -191,13 +190,16 @@ if __name__ == "__main__":
 
 	yellow_low = np.array([21, 0, 65])
 	yellow_up = np.array([72, 150, 147])
+	
+	color_global_low = np.array([21, 0, 0])
+	color_global_up = np.array([179, 255, 126])
 
 	# Threshold the HSV image
 	red = cv2.inRange(hsv, red_low, red_up)
 	green = cv2.inRange(hsv, green_low, green_up)
 	blue = cv2.inRange(hsv, blue_low, blue_up)
 	yellow = cv2.inRange(hsv, yellow_low, yellow_up)
-	
+	color_global = cv2.inRange(hsv, color_global_low, color_global_up)
 	'''
 	# Showing hsv binary images
 	cv2.imshow('red',red)
@@ -217,7 +219,7 @@ if __name__ == "__main__":
 	green_opening = cv2.morphologyEx(green, cv2.MORPH_OPEN, kernel)
 	blue_opening = cv2.morphologyEx(blue, cv2.MORPH_OPEN, kernel)
 	yellow_opening = cv2.morphologyEx(yellow, cv2.MORPH_OPEN, kernel)
-	
+	color_glb_opening = cv2.morphologyEx(color_global, cv2.MORPH_OPEN, kernel)
 	#red_opening = cv2.dilate(red_opening2, kernel, iterations=2)
 	#green_opening = cv2.dilate(green_opening2, kernel, iterations=2)
 	#blue_opening = cv2.dilate(blue_opening2, kernel, iterations=2)
@@ -238,7 +240,8 @@ if __name__ == "__main__":
 	#cv2.imshow('image',hsv)
 	#cv2.waitKey(0)
 	'''
-	e1 = cv2.getTickCount()
+	
+	'''
 	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
 	for y in range(height):
 		for x in range(width):
@@ -257,7 +260,25 @@ if __name__ == "__main__":
 						rel_miny = y
 					elif y > rel_maxy:
 						rel_maxy = y
-						
+	'''
+	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
+	for y in range(height):
+		for x in range(width):
+			if color_glb_opening[x,y] > 0:
+				if rel_maxx == 0 and rel_maxy == 0 and \
+				rel_minx == 0 and rel_miny == 0:
+					rel_maxx, rel_minx = x, x
+					rel_maxy, rel_miny = y, y
+				else:
+					if x < rel_minx:
+						rel_minx = x
+					elif x > rel_maxx:
+						rel_maxx = x
+					if y < rel_miny:
+						rel_miny = y
+					elif y > rel_maxy:
+						rel_maxy = y
+					
 	
 					
 	pixels_red, pixels_green, pixels_blue = 0, 0, 0
@@ -367,7 +388,7 @@ if __name__ == "__main__":
 	#print colors[2]._center_mass
 	
 	# Showing centers of mass on a new image and bounding boxes
-	img2 = cv2.imread('equ_3xl.png')
+	img2 = cv2.imread(img_name)
 	color = (0,255,0)
 	for x in range(len(colors)):
 		#print colors[x]._minx, colors[x]._miny, colors[x]._maxx, \
@@ -497,33 +518,54 @@ if __name__ == "__main__":
 	#cv2.waitKey(0)
 		
 	# Choosing correspondence and calculating orientation
-	min = 0
-	dist = 0
+	font = cv2.FONT_HERSHEY_SIMPLEX
+	minimum = 0
+	#distances = []
 	for x in range(len(yellow_colors)):
+		distances = []
+		xy_vals = []
 		for y in range(len(colors)):
-			distance, x_val, y_val = euclidean_dist(yellow_colors[x]._center_mass, colors[y]._center_mass)
-			#print distance
-			if y == 0:
-				min = 0
-				dist = distance
-				yellow_colors[x]._correspondence = y
-				angle_rad = math.atan2(y_val, x_val)
+			#print x, y
+			distance = euclidean_dist(yellow_colors[x]._center_mass, colors[y]._center_mass)
+			distances.append(distance)
+			x_val = -yellow_colors[x]._center_mass[0] + \
+			colors[y]._center_mass[0]
+			y_val = -(height - yellow_colors[x]._center_mass[1]) + \
+			(height - colors[y]._center_mass[1])
+			xy_vals.append([x_val, y_val])
+		
+		# Orientation in degrees
+		minimum = min(distances)
+		for z in range(len(distances)):
+			if minimum == distances[z]:
+				angle_rad = math.atan2(xy_vals[z][1], xy_vals[z][0])
 				angle_deg = math.degrees(angle_rad)
-				colors[y]._orientation = int(angle_deg)
-			elif dist < distance:
-				min = x
-				dist = distance
-				yellow_colors[x]._correspondence = y
-				angle_rad = math.atan2(y_val, x_val)
-				angle_deg = math.degrees(angle_rad)
-				colors[y]._orientation = int(angle_deg)
-		colors[y]._correspondence = min
+				
+				if angle_deg >= 0 and angle_deg <= 90:
+					angle_deg = 90 - angle_deg
+				elif angle_deg > 90 and angle_deg <= 180:
+					angle_deg = 360 + (90 - angle_deg)
+				else: 
+					#angle_deg < 0
+					angle_deg = 90 + (-1 * angle_deg)
+				
+				colors[z]._correspondence = x
+				colors[z]._orientation = int(angle_deg)
+				(a, b) = colors[z]._center_mass
+				# Printing angle as a string on image
+				cv2.putText(img2,str(int(angle_deg)),(a,b),font,0.75,
+				(255,255,255),1)
+			
+	
 	'''
-	draw = ImageDraw.Draw(img2)
-	font = ImageFont.load_default()
+	# Printing center of mass
 	for x in range(len(colors)):
-		draw.text((colors[x]._center_mass),(colors[x]._center_mass[0], colors[x]._center_mass[1]), (0,255,255),font=font)
+		print colors[x]._orientation
+		c = colors[x]._correspondence
+		#print c
+		print colors[x]._center_mass, yellow_colors[c]._center_mass
 	'''
+	
 	e2 = cv2.getTickCount()
 	time = (e2 - e1) / cv2.getTickFrequency()
 	print time	
