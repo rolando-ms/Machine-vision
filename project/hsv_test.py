@@ -245,8 +245,7 @@ if __name__ == "__main__":
 	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
 	for y in range(height):
 		for x in range(width):
-			if red_opening[x,y] > 0 or green_opening[x,y] > 0 or \
-			blue_opening[x,y] > 0 or yellow_opening[x,y] > 0:
+			if color_glb_opening[x,y] > 0:
 				if rel_maxx == 0 and rel_maxy == 0 and \
 				rel_minx == 0 and rel_miny == 0:
 					rel_maxx, rel_minx = x, x
@@ -263,24 +262,30 @@ if __name__ == "__main__":
 	'''
 	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
 	for y in range(height):
-		for x in range(width):
-			if color_glb_opening[x,y] > 0:
-				if rel_maxx == 0 and rel_maxy == 0 and \
-				rel_minx == 0 and rel_miny == 0:
-					rel_maxx, rel_minx = x, x
-					rel_maxy, rel_miny = y, y
-				else:
-					if x < rel_minx:
-						rel_minx = x
-					elif x > rel_maxx:
-						rel_maxx = x
-					if y < rel_miny:
-						rel_miny = y
-					elif y > rel_maxy:
-						rel_maxy = y
+		row = color_glb_opening[:,y]
+		#print row
+		max_row = max(row)
+		if max_row > 0:
+			if rel_maxy == 0 and rel_miny == 0:
+				#rel_maxx, rel_minx = x, x
+				rel_maxy, rel_miny = y, y
+			else:
+				if y > rel_maxy:
+					rel_maxy = y
 					
+	for x in range(width):
+		col = color_glb_opening[x,:]
+		max_col = max(col)
+		if max_col > 0:
+			if rel_maxx == 0 and rel_minx == 0:
+				rel_maxx, rel_minx = x, x
+				#rel_maxy, rel_miny = y, y
+			else:
+				if x > rel_maxx:
+					rel_maxx = x
 	
-					
+	#print rel_maxx, rel_maxy, rel_minx, rel_miny
+	
 	pixels_red, pixels_green, pixels_blue = 0, 0, 0
 	cumulative_x_red, cumulative_x_green, cumulative_x_blue = 0, 0, 0
 	cumulative_y_red, cumulative_y_green, cumulative_y_blue = 0, 0, 0
