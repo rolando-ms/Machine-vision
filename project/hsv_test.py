@@ -22,7 +22,19 @@ class circle_data:
 		self._correspondence = 0
 		self._orientation = 0
 
-def assignment(colour,minx, miny, maxx, maxy, pix_number, center_of_mass):
+def assignment(colour,minx, miny, maxx, maxy, pix_number, cumulative_x, cumulative_y):
+	colour._minx = minx
+	colour._miny = miny
+	colour._maxx = maxx
+	colour._maxy = maxy
+	colour._pix_number = pix_number
+	#colour._center_mass = center_of_mass
+	colour._cumulative_x = cumulative_x
+	colour._cumulative_y = cumulative_y
+	colour._center_mass = [cumulative_x/pix_number, cumulative_y/pix_number]
+	return colour		
+		
+def assignment2(colour,minx, miny, maxx, maxy, pix_number, center_of_mass):
 	colour._minx = minx
 	colour._miny = miny
 	colour._maxx = maxx
@@ -407,140 +419,182 @@ if __name__ == "__main__":
 	
 	#print rel_maxx, rel_maxy, rel_minx, rel_miny
 	
-	pixels_red, pixels_green, pixels_blue = 0, 0, 0
-	cumulative_x_red, cumulative_x_green, cumulative_x_blue = 0, 0, 0
-	cumulative_y_red, cumulative_y_green, cumulative_y_blue = 0, 0, 0
-	minx_red, miny_red, maxx_red, maxy_red = 0, 0, 0, 0
-	minx_green, miny_green, maxx_green, maxy_green = 0, 0, 0, 0
-	minx_blue, miny_blue, maxx_blue, maxy_blue = 0, 0, 0, 0
+	# If colors are detected correctly
+	if (rel_maxy - rel_miny) < height / 4 and \
+	(rel_maxx - rel_minx) < width / 4:
 	
-	'''
-	e1 = cv2.getTickCount()
-	e2 = cv2.getTickCount()
-	time = (e2 - e1) / cv2.getTickFrequency()
-	print time
-	'''
-	red_counter, green_counter, blue_counter = 0, 0, 0
-	red_colors, green_colors, blue_colors = [], [], []
-	red_labels = np.zeros((width,height), np.uint8)
-	green_labels = np.zeros((width,height), np.uint8)
-	blue_labels = np.zeros((width,height), np.uint8)
-	cumulatives = 0
-	limits = 0
+		pixels_red, pixels_green, pixels_blue = 0, 0, 0
+		cumulative_x_red, cumulative_x_green, cumulative_x_blue = 0, 0, 0
+		cumulative_y_red, cumulative_y_green, cumulative_y_blue = 0, 0, 0
+		minx_red, miny_red, maxx_red, maxy_red = 0, 0, 0, 0
+		minx_green, miny_green, maxx_green, maxy_green = 0, 0, 0, 0
+		minx_blue, miny_blue, maxx_blue, maxy_blue = 0, 0, 0, 0
 	
-	# Getting color data
-	for y in range(rel_miny, rel_maxy):
-		for x in range(rel_minx, rel_maxx):
-			#print width, height
-			#print x,y
-			'''
-			if red_opening[x,y] > 0:
-				pixels_red += 1
-				cumulative_x_red += x
-				cumulative_y_red += y
-				minx_red, miny_red, maxx_red, maxy_red = limits(
-				x,y,minx_red,miny_red,maxx_red,maxy_red)
-			'''
-			#DFS(image, labels2, x2, y2, count):
-			#return labels2, count, pix_num, cumul_x, cumul_y, 
-			#minix, miniy, maxix, maxiy
+		# Getting color data
+		for y in range(rel_miny, rel_maxy):
+			for x in range(rel_minx, rel_maxx):
+				# Red
+				if red_opening[x,y] > 0:
+					pixels_red += 1
+					cumulative_x_red += x
+					cumulative_y_red += y
+					minx_red, miny_red, maxx_red, maxy_red = limits(
+					x,y,minx_red,miny_red,maxx_red,maxy_red)
 			
-			if red_opening[x,y] > 0 and red_labels[x,y] == 0:
-				red_labels, red_counter, pixels, cumulatives, limits = DFS2(red_opening, 
-				red_labels, x, y, red_counter)
-			
-				red_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
-				limits[0], limits[1], limits[2], limits[3]])
-				#print 'red', red_colors
-			
-			'''
-			if green_opening[x,y] > 0:
-				pixels_green += 1
-				cumulative_x_green += x
-				cumulative_y_green += y
-				minx_green, miny_green, maxx_green, maxy_green = limits(
-				x,y,minx_green,miny_green,maxx_green,maxy_green)
-			'''
-			if green_opening[x,y] > 0 and green_labels[x,y] == 0:
-				green_labels, green_counter, pixels, cumulatives, limits = DFS2(green_opening, 
-				green_labels, x, y, green_counter)
-			
-				green_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
-				limits[0], limits[1], limits[2], limits[3]])
-				#print 'green', green_colors
-			
-			'''
-			if blue_opening[x,y] > 0:
-				pixels_blue += 1
-				cumulative_x_blue += x
-				cumulative_y_blue += y
-				minx_blue, miny_blue, maxx_blue, maxy_blue = limits(
-				x,y,minx_blue,miny_blue,maxx_blue,maxy_blue)
-			'''
-			if blue_opening[x,y] > 0 and blue_labels[x,y] == 0:
-				blue_labels, blue_counter, pixels, cumulatives, limits = DFS2(blue_opening, 
-				blue_labels, x, y, blue_counter)
-			
-				blue_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
-				limits[0], limits[1], limits[2], limits[3]])
-				#print 'blue', blue_colors
-			
-	#print pixels_red, pixels_green, pixels_blue
-	#print cumulative_x_red, cumulative_x_green, cumulative_x_blue
-	#print cumulative_y_red, cumulative_y_green, cumulative_y_blue
-	#print (cumulative_x_red / pixels_red, cumulative_y_red / pixels_red)
-	#print (cumulative_x_green / pixels_green, cumulative_y_green / pixels_green)
-	#print (cumulative_x_blue / pixels_blue, cumulative_y_blue / pixels_blue)
-	
-	# Popping small or large undesirable objects on each color structure
-	# and keeping the biggest one of the remainders
-	# Red
-	red_colors = reducing_color(red_colors)
-	
-	# Green
-	green_colors = reducing_color(green_colors)
-	
-	# Blue
-	blue_colors = reducing_color(blue_colors)
-	
-	#print 'red', red_colors
-	#print 'green', green_colors
-	#print 'blue', blue_colors
-	
-	
-	# Assigning color data to list
-	# Red
-	minx_red, miny_red, maxx_red, maxy_red = red_colors[0][3],\
-	red_colors[0][4], red_colors[0][5], red_colors[0][6]
-	pixels_red = red_colors[0][0]
-	center = []
-	center.append(red_colors[0][1])
-	center.append(red_colors[0][2])
-	colors[0] = assignment(colors[0], minx_red, miny_red, maxx_red, maxy_red,
-	pixels_red, center)
-	#print colors[0]._center_mass
-	
-	# Green
-	minx_green, miny_green, maxx_green, maxy_green = green_colors[0][3],\
-	green_colors[0][4], green_colors[0][5], green_colors[0][6]
-	pixels_green = green_colors[0][0]
-	center = []
-	center.append(green_colors[0][1])
-	center.append(green_colors[0][2])
-	colors[1] = assignment(colors[1], minx_green, miny_green, maxx_green, maxy_green,
-	pixels_green, center)
-	#print colors[1]._center_mass 
-	
-	# Blue
-	minx_blue, miny_blue, maxx_blue, maxy_blue = blue_colors[0][3],\
-	blue_colors[0][4], blue_colors[0][5], blue_colors[0][6]
-	pixels_blue = blue_colors[0][0]
-	center = []
-	center.append(blue_colors[0][1])
-	center.append(blue_colors[0][2])
-	colors[2] = assignment(colors[2], minx_blue, miny_blue, maxx_blue, maxy_blue,
-	pixels_blue, center)
-	#print colors[2]._center_mass
+				# Green
+				if green_opening[x,y] > 0:
+					pixels_green += 1
+					cumulative_x_green += x
+					cumulative_y_green += y
+					minx_green, miny_green, maxx_green, maxy_green = limits(
+					x,y,minx_green,miny_green,maxx_green,maxy_green)
+				
+				#Blue
+				if blue_opening[x,y] > 0:
+					pixels_blue += 1
+					cumulative_x_blue += x
+					cumulative_y_blue += y
+					minx_blue, miny_blue, maxx_blue, maxy_blue = limits(
+					x,y,minx_blue,miny_blue,maxx_blue,maxy_blue)
+				
+		#print pixels_red, pixels_green, pixels_blue
+		#print cumulative_x_red, cumulative_x_green, cumulative_x_blue
+		#print cumulative_y_red, cumulative_y_green, cumulative_y_blue
+		#print (cumulative_x_red / pixels_red, cumulative_y_red / pixels_red)
+		#print (cumulative_x_green / pixels_green, cumulative_y_green / pixels_green)
+		#print (cumulative_x_blue / pixels_blue, cumulative_y_blue / pixels_blue)
+		
+		# Assigning data to color structure
+		# Red
+		colors[0] = assignment(colors[0], minx_red, miny_red, maxx_red, maxy_red,
+		pixels_red, cumulative_x_red, cumulative_y_red)
+		
+		# Green
+		colors[1] = assignment(colors[1], minx_green, miny_green, maxx_green, maxy_green,
+		pixels_green, cumulative_x_green, cumulative_y_green)
+		
+		# Blue
+		colors[2] = assignment(colors[2], minx_blue, miny_blue, maxx_blue, maxy_blue,
+		pixels_blue, cumulative_x_blue, cumulative_y_blue)
+
+		
+	else:
+		red_counter, green_counter, blue_counter = 0, 0, 0
+		red_colors, green_colors, blue_colors = [], [], []
+		red_labels = np.zeros((width,height), np.uint8)
+		green_labels = np.zeros((width,height), np.uint8)
+		blue_labels = np.zeros((width,height), np.uint8)
+		cumulatives = 0
+		limits = 0
+		
+		# Getting color data
+		for y in range(rel_miny, rel_maxy):
+			for x in range(rel_minx, rel_maxx):
+				#print width, height
+				#print x,y
+				'''
+				if red_opening[x,y] > 0:
+					pixels_red += 1
+					cumulative_x_red += x
+					cumulative_y_red += y
+					minx_red, miny_red, maxx_red, maxy_red = limits(
+					x,y,minx_red,miny_red,maxx_red,maxy_red)
+				'''
+				#DFS(image, labels2, x2, y2, count):
+				#return labels2, count, pix_num, cumul_x, cumul_y, 
+				#minix, miniy, maxix, maxiy
+				
+				if red_opening[x,y] > 0 and red_labels[x,y] == 0:
+					red_labels, red_counter, pixels, cumulatives, limits = DFS2(red_opening, 
+					red_labels, x, y, red_counter)
+				
+					red_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+					limits[0], limits[1], limits[2], limits[3]])
+					#print 'red', red_colors
+				
+				'''
+				if green_opening[x,y] > 0:
+					pixels_green += 1
+					cumulative_x_green += x
+					cumulative_y_green += y
+					minx_green, miny_green, maxx_green, maxy_green = limits(
+					x,y,minx_green,miny_green,maxx_green,maxy_green)
+				'''
+				
+				if green_opening[x,y] > 0 and green_labels[x,y] == 0:
+					green_labels, green_counter, pixels, cumulatives, limits = DFS2(green_opening, 
+					green_labels, x, y, green_counter)
+				
+					green_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+					limits[0], limits[1], limits[2], limits[3]])
+					#print 'green', green_colors
+				
+				'''
+				if blue_opening[x,y] > 0:
+					pixels_blue += 1
+					cumulative_x_blue += x
+					cumulative_y_blue += y
+					minx_blue, miny_blue, maxx_blue, maxy_blue = limits(
+					x,y,minx_blue,miny_blue,maxx_blue,maxy_blue)
+				'''
+				
+				if blue_opening[x,y] > 0 and blue_labels[x,y] == 0:
+					blue_labels, blue_counter, pixels, cumulatives, limits = DFS2(blue_opening, 
+					blue_labels, x, y, blue_counter)
+				
+					blue_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+					limits[0], limits[1], limits[2], limits[3]])
+					#print 'blue', blue_colors
+		
+		# Popping small or large undesirable objects on each color structure
+		# and keeping the biggest one of the remainders
+		# Red
+		red_colors = reducing_color(red_colors)
+		
+		# Green
+		green_colors = reducing_color(green_colors)
+		
+		# Blue
+		blue_colors = reducing_color(blue_colors)
+		
+		#print 'red', red_colors
+		#print 'green', green_colors
+		#print 'blue', blue_colors
+		
+		
+		# Assigning color data to list
+		# Red
+		minx_red, miny_red, maxx_red, maxy_red = red_colors[0][3],\
+		red_colors[0][4], red_colors[0][5], red_colors[0][6]
+		pixels_red = red_colors[0][0]
+		center = []
+		center.append(red_colors[0][1])
+		center.append(red_colors[0][2])
+		colors[0] = assignment2(colors[0], minx_red, miny_red, maxx_red, maxy_red,
+		pixels_red, center)
+		#print colors[0]._center_mass
+		
+		# Green
+		minx_green, miny_green, maxx_green, maxy_green = green_colors[0][3],\
+		green_colors[0][4], green_colors[0][5], green_colors[0][6]
+		pixels_green = green_colors[0][0]
+		center = []
+		center.append(green_colors[0][1])
+		center.append(green_colors[0][2])
+		colors[1] = assignment2(colors[1], minx_green, miny_green, maxx_green, maxy_green,
+		pixels_green, center)
+		#print colors[1]._center_mass 
+		
+		# Blue
+		minx_blue, miny_blue, maxx_blue, maxy_blue = blue_colors[0][3],\
+		blue_colors[0][4], blue_colors[0][5], blue_colors[0][6]
+		pixels_blue = blue_colors[0][0]
+		center = []
+		center.append(blue_colors[0][1])
+		center.append(blue_colors[0][2])
+		colors[2] = assignment2(colors[2], minx_blue, miny_blue, maxx_blue, maxy_blue,
+		pixels_blue, center)
+		#print colors[2]._center_mass
 	
 	# Showing centers of mass on a new image and bounding boxes
 	img2 = img
@@ -571,126 +625,184 @@ if __name__ == "__main__":
 	#cv2.imshow('center of mass',img2)
 	#cv2.waitKey(0)
 	
+	# Colors structure
+	yellow_colors = []
+	for x in range(bot_num):
+		yellow_colors.append(circle_data())
+		
 	# Yellow color structure
 	yellow_colors2 = []
 	#for x in range(bot_num):
 	#	yellow_colors2.append(circle_data())
 	
-	# DFS for yellow color
+	#
 	yellow_counter = 0
 	yellow_labels = np.zeros((width,height), np.uint8)
-	#width, height= labels.shape
-	#print width, height
-	first = 0
-	yellow_pixels = 0
-	cumulatives_yellow = 0
-	limits_yellow = 0
-	for y in range(rel_miny, rel_maxy):
-		for x in range(rel_minx, rel_maxx):
-			if yellow_opening[x,y] > 0 and yellow_labels[x,y] == 0:
-				#labels, counter = DFS(yellow_opening, labels, x, y, counter)
-				#print yellow_counter
-				yellow_labels, yellow_counter, yellow_pixels, \
-				cumulatives_yellow, limits_yellow = DFS2(yellow_opening,\
-				yellow_labels, x, y, yellow_counter)
-				
-				yellow_colors2.append([yellow_pixels, 
-				cumulatives_yellow[0]/yellow_pixels, cumulatives_yellow[1]/yellow_pixels, 
-				limits_yellow[0], limits_yellow[1], limits_yellow[2], 
-				limits_yellow[3]])
-				#print yellow_colors2
-				#return labels2, count, pix_num, [cumul_x, cumul_y], [minix, miniy, maxix, maxiy]
-	#np.set_printoptions(threshold='nan')
-	#print labels
 	
-	pixels_1, pixels_2, pixels_3 = 0, 0, 0
-	cumulative_x_1, cumulative_x_2, cumulative_x_3 = 0, 0, 0
-	cumulative_y_1, cumulative_y_2, cumulative_y_3 = 0, 0, 0
-	minx_1, miny_1, maxx_1, maxy_1 = 0, 0, 0, 0
-	minx_2, miny_2, maxx_2, maxy_2 = 0, 0, 0, 0
-	minx_3, miny_3, maxx_3, maxy_3 = 0, 0, 0, 0
-	
-	'''
-	test = Image.new('L', (height, width), "black")
-	test_pix = test.load()
-	print width, height
-	
-	for y in range(height):
-		for x in range(width):
-			if labels[x,y] > 0:
-				test_pix[x,y] = labels[x,y] * 20
-	test.show()
-	
-	test = [0]
-	for y in range(height):
-		for x in range(width):
-			if labels[x,y] > 0:
-				for z in range(len(test)):
-					if labels[x,y] == test[z]:
-						break
-					if z == len(test) - 1 and labels[x,y] != test[z]:
-						test.append(labels[x,y])
-	print test
-	'''
-	
-	# Getting limits of yellow colors
-	for y in range(rel_miny, rel_maxy):
-		for x in range(rel_minx, rel_maxx):
-			#print y , x
-			yellow_colors2 = reducing_yellow(yellow_colors2)
-			'''
-			if labels[x,y] == 1:
-				pixels_1 += 1
-				cumulative_x_1 += x
-				cumulative_y_1 += y
-				minx_1, miny_1, maxx_1, maxy_1 = limits(
-				x,y,minx_1,miny_1,maxx_1,maxy_1)
-			
-			if labels[x,y] == 2:
-				pixels_2 += 1
-				cumulative_x_2 += x
-				cumulative_y_2 += y
-				minx_2, miny_2, maxx_2, maxy_2 = limits(
-				x,y,minx_2,miny_2,maxx_2,maxy_2)
-			
-			if labels[x,y] == 3:
-				pixels_3 += 1
-				cumulative_x_3 += x
-				cumulative_y_3 += y
-				minx_3, miny_3, maxx_3, maxy_3 = limits(
-				x,y,minx_3,miny_3,maxx_3,maxy_3)
-			'''
-	#print pixels_1, pixels_2, pixels_3
-	
-	# Colors structure
-	yellow_colors = []
-	for x in range(bot_num):
-		yellow_colors.append(circle_data())
-	
-	# Assigning color data to list
-	for x in range(len(yellow_colors2)):
-		# Yellow 1
-		minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = yellow_colors2[x][3],\
-		yellow_colors2[x][4], yellow_colors2[x][5], yellow_colors2[x][6]
-		pixels_yellow = yellow_colors2[x][0]
-		center = []
-		center.append(yellow_colors2[x][1])
-		center.append(yellow_colors2[x][2])
-		yellow_colors[x] = assignment(yellow_colors[x], minx_yellow, \
-		miny_yellow, maxx_yellow, maxy_yellow,
-		pixels_yellow, center)
-		#print yellow_colors[0]._center_mass
-	'''
-	# Yellow 2
-	yellow_colors[1] = assignment(yellow_colors[1], minx_2, miny_2, maxx_2, 
-	maxy_2, pixels_2, cumulative_x_2, cumulative_y_2)
-	#print yellow_colors[1]._center_mass 
-	# Yellow 3
-	yellow_colors[2] = assignment(yellow_colors[2], minx_3, miny_3, maxx_3, 
-	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
-	#print yellow_colors[2]._center_mass
-	'''
+	if (rel_maxy - rel_miny) < height / 4 and \
+	(rel_maxx - rel_minx) < width / 4:
 		
+		pixels_1, pixels_2, pixels_3 = 0, 0, 0
+		cumulative_x_1, cumulative_x_2, cumulative_x_3 = 0, 0, 0
+		cumulative_y_1, cumulative_y_2, cumulative_y_3 = 0, 0, 0
+		minx_1, miny_1, maxx_1, maxy_1 = 0, 0, 0, 0
+		minx_2, miny_2, maxx_2, maxy_2 = 0, 0, 0, 0
+		minx_3, miny_3, maxx_3, maxy_3 = 0, 0, 0, 0
+	
+		for y in range(rel_miny, rel_maxy):
+			for x in range(rel_minx, rel_maxx):
+				if yellow_opening[x,y] > 0 and yellow_labels[x,y] == 0:
+					yellow_labels, yellow_counter = DFS(yellow_opening,\
+					yellow_labels, x, y, yellow_counter)
+					
+					#def DFS(image, labels2, x2, y2, count):
+					#return labels2, count
+					
+		# Getting limits of yellow colors
+		for y in range(rel_miny, rel_maxy):
+			for x in range(rel_minx, rel_maxx):
+				
+				if yellow_labels[x,y] == 1:
+					pixels_1 += 1
+					cumulative_x_1 += x
+					cumulative_y_1 += y
+					#minx_1, miny_1, maxx_1, maxy_1 = limits(
+					#x,y,minx_1,miny_1,maxx_1,maxy_1)
+					if minx_1 == 0 and miny_1 == 0 and \
+						maxx_1 == 0 and maxy_1 == 0:
+						minx_1, maxx_1 = x, x
+						miny_1, maxy_1 = y, y
+					else:
+						if x < minx_1:
+							minx_1 = x
+						elif x > maxx_1:
+							maxx_1 = x
+						if y < miny_1:
+							miny_1 = y
+						elif y > maxy_1:
+							maxy_1 = y
+				
+				if yellow_labels[x,y] == 2:
+					pixels_2 += 1
+					cumulative_x_2 += x
+					cumulative_y_2 += y
+					#minx_2, miny_2, maxx_2, maxy_2 = limits(
+					#x,y,minx_2,miny_2,maxx_2,maxy_2)
+					if minx_2 == 0 and miny_2 == 0 and \
+						maxx_2 == 0 and maxy_2 == 0:
+						minx_2, maxx_2 = x, x
+						miny_2, maxy_2 = y, y
+					else:
+						if x < minx_2:
+							minx_2 = x
+						elif x > maxx_2:
+							maxx_2 = x
+						if y < miny_2:
+							miny_2 = y
+						elif y > maxy_2:
+							maxy_2 = y
+				
+				if yellow_labels[x,y] == 3:
+					pixels_3 += 1
+					cumulative_x_3 += x
+					cumulative_y_3 += y
+					#minx_3, miny_3, maxx_3, maxy_3 = limits(
+					#x,y,minx_3,miny_3,maxx_3,maxy_3)
+					if minx_3 == 0 and miny_3 == 0 and \
+						maxx_3 == 0 and maxy_3 == 0:
+						minx_3, maxx_3 = x, x
+						miny_3, maxy_3 = y, y
+					else:
+						if x < minx_3:
+							minx_3 = x
+						elif x > maxx_3:
+							maxx_3 = x
+						if y < miny_3:
+							miny_3 = y
+						elif y > maxy_3:
+							maxy_3 = y
+					
+		#print 'INSIDE'
+		# Yellow 1
+		yellow_colors[0] = assignment(yellow_colors[0], minx_1, miny_1, maxx_1, 
+		maxy_1, pixels_1, cumulative_x_1, cumulative_y_1)
+		#print yellow_colors[1]._center_mass 
+		# Yellow 2
+		yellow_colors[1] = assignment(yellow_colors[1], minx_2, miny_2, maxx_2, 
+		maxy_2, pixels_2, cumulative_x_2, cumulative_y_2)
+		#print yellow_colors[1]._center_mass 
+		# Yellow 3
+		yellow_colors[2] = assignment(yellow_colors[2], minx_3, miny_3, maxx_3, 
+		maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
+		#print yellow_colors[2]._center_mass
+	
+	else:
+		# DFS for yellow color
+		#width, height= labels.shape
+		#print width, height
+		first = 0
+		yellow_pixels = 0
+		cumulatives_yellow = 0
+		limits_yellow = 0
+		for y in range(rel_miny, rel_maxy):
+			for x in range(rel_minx, rel_maxx):
+				if yellow_opening[x,y] > 0 and yellow_labels[x,y] == 0:
+					#labels, counter = DFS(yellow_opening, labels, x, y, counter)
+					#print yellow_counter
+					yellow_labels, yellow_counter, yellow_pixels, \
+					cumulatives_yellow, limits_yellow = DFS2(yellow_opening,\
+					yellow_labels, x, y, yellow_counter)
+					
+					yellow_colors2.append([yellow_pixels, 
+					cumulatives_yellow[0]/yellow_pixels, cumulatives_yellow[1]/yellow_pixels, 
+					limits_yellow[0], limits_yellow[1], limits_yellow[2], 
+					limits_yellow[3]])
+					#print yellow_colors2
+					#return labels2, count, pix_num, [cumul_x, cumul_y], [minix, miniy, maxix, maxiy]
+		#np.set_printoptions(threshold='nan')
+		#print labels
+		
+		'''
+		test = Image.new('L', (height, width), "black")
+		test_pix = test.load()
+		print width, height
+		
+		for y in range(height):
+			for x in range(width):
+				if labels[x,y] > 0:
+					test_pix[x,y] = labels[x,y] * 20
+		test.show()
+		
+		test = [0]
+		for y in range(height):
+			for x in range(width):
+				if labels[x,y] > 0:
+					for z in range(len(test)):
+						if labels[x,y] == test[z]:
+							break
+						if z == len(test) - 1 and labels[x,y] != test[z]:
+							test.append(labels[x,y])
+		print test
+		'''
+		
+		# Reducing yellow color structure
+		yellow_colors2 = reducing_yellow(yellow_colors2)
+
+		# Assigning color data to list
+		for x in range(len(yellow_colors2)):
+			# Yellow 1
+			minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = yellow_colors2[x][3],\
+			yellow_colors2[x][4], yellow_colors2[x][5], yellow_colors2[x][6]
+			pixels_yellow = yellow_colors2[x][0]
+			center = []
+			center.append(yellow_colors2[x][1])
+			center.append(yellow_colors2[x][2])
+			yellow_colors[x] = assignment2(yellow_colors[x], minx_yellow, \
+			miny_yellow, maxx_yellow, maxy_yellow,
+			pixels_yellow, center)
+			#print yellow_colors[0]._center_mass
+
+	
 	# Showing centers of mass on a new image and bounding boxes
 	#img2 = cv2.imread('equ_3.png')
 	color = (0,255,255)
