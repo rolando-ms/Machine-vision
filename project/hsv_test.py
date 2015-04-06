@@ -31,7 +31,10 @@ def assignment(colour,minx, miny, maxx, maxy, pix_number, cumulative_x, cumulati
 	#colour._center_mass = center_of_mass
 	colour._cumulative_x = cumulative_x
 	colour._cumulative_y = cumulative_y
-	colour._center_mass = [cumulative_x/pix_number, cumulative_y/pix_number]
+	if cumulative_x == 0 or cumulative_y == 0:
+		colour._center_mass = [0, 0]
+	else:
+		colour._center_mass = [cumulative_x/pix_number, cumulative_y/pix_number]
 	return colour		
 		
 def assignment2(colour,minx, miny, maxx, maxy, pix_number, center_of_mass):
@@ -258,14 +261,21 @@ def reducing_yellow(color_struct):
 				#print x
 				color_struct.pop(color_len - x - 1)
 			'''
-			if x == color_len - 1 and len(color_struct) > 1:
-				for y in range(len(color_struct)):
-					if color_struct[len(color_struct) - x - 1][0] > max:
-						max = color_struct[len(color_struct) - x - 1][0]
+			if x == color_len - 1 and len(color_struct) > 3:
+				color_struct = [color_struct[0],color_struct[1],\
+				color_struct[2]]
+				#for y in range(len(color_struct)):
+					#if color_struct[len(color_struct) - x - 1][0] > max:
+					#	max = color_struct[len(color_struct) - x - 1][0]
+				
 				for y in range(len(color_struct)):
 					if color_struct[len(color_struct) - x - 1][0] != max:
 						color_struct.pop(len(color_struct) - x - 1)
 			'''
+	if len(color_struct) > 3:
+		color_struct = [color_struct[0],color_struct[1],\
+		color_struct[2]]
+	
 	return color_struct
 
 def color_det_count(colours, rel_minix, rel_miniy, rel_maxix, rel_maxiy,\
@@ -400,49 +410,66 @@ opening_red, opening_green, opening_blue):
 	# Popping small or large undesirable objects on each color structure
 	# and keeping the biggest one of the remainders
 	# Red
+	#print red_colors
 	red_colors = reducing_color(red_colors)
 	
 	# Green
+	#print green_colors
 	green_colors = reducing_color(green_colors)
 	
 	# Blue
+	#print blue_colors
 	blue_colors = reducing_color(blue_colors)
 	
 	#print 'red', red_colors
 	#print 'green', green_colors
 	#print 'blue', blue_colors
 	
-	
 	# Assigning color data to list
 	# Red
-	minx_red, miny_red, maxx_red, maxy_red = red_colors[0][3],\
-	red_colors[0][4], red_colors[0][5], red_colors[0][6]
-	pixels_red = red_colors[0][0]
-	center = []
-	center.append(red_colors[0][1])
-	center.append(red_colors[0][2])
+	#print 'red:',red_colors
+	if len(red_colors) > 0:
+		minx_red, miny_red, maxx_red, maxy_red = red_colors[0][3],\
+		red_colors[0][4], red_colors[0][5], red_colors[0][6]
+		pixels_red = red_colors[0][0]
+		center = []
+		center.append(red_colors[0][1])
+		center.append(red_colors[0][2])
+	else:
+		minx_red, miny_red, maxx_red, maxy_red = 0, 0, 0, 0
+		pixels_red, center = 0, [0,0]
 	colors[0] = assignment2(colors[0], minx_red, miny_red, maxx_red, maxy_red,
 	pixels_red, center)
 	#print colors[0]._center_mass
 	
 	# Green
-	minx_green, miny_green, maxx_green, maxy_green = green_colors[0][3],\
-	green_colors[0][4], green_colors[0][5], green_colors[0][6]
-	pixels_green = green_colors[0][0]
-	center = []
-	center.append(green_colors[0][1])
-	center.append(green_colors[0][2])
+	#print 'green:',green_colors
+	if len(green_colors) > 0:
+		minx_green, miny_green, maxx_green, maxy_green = green_colors[0][3],\
+		green_colors[0][4], green_colors[0][5], green_colors[0][6]
+		pixels_green = green_colors[0][0]
+		center = []
+		center.append(green_colors[0][1])
+		center.append(green_colors[0][2])
+	else:
+		minx_green, miny_green, maxx_green, maxy_green = 0, 0, 0, 0
+		pixels_green, center = 0, [0,0]
 	colors[1] = assignment2(colors[1], minx_green, miny_green, maxx_green, maxy_green,
 	pixels_green, center)
 	#print colors[1]._center_mass 
 	
 	# Blue
-	minx_blue, miny_blue, maxx_blue, maxy_blue = blue_colors[0][3],\
-	blue_colors[0][4], blue_colors[0][5], blue_colors[0][6]
-	pixels_blue = blue_colors[0][0]
-	center = []
-	center.append(blue_colors[0][1])
-	center.append(blue_colors[0][2])
+	#print 'blue:', blue_colors
+	if len(blue_colors) > 0:
+		minx_blue, miny_blue, maxx_blue, maxy_blue = blue_colors[0][3],\
+		blue_colors[0][4], blue_colors[0][5], blue_colors[0][6]
+		pixels_blue = blue_colors[0][0]
+		center = []
+		center.append(blue_colors[0][1])
+		center.append(blue_colors[0][2])
+	else:
+		minx_blue, miny_blue, maxx_blue, maxy_blue = 0, 0, 0, 0
+		pixels_blue, center = 0, [0,0]
 	colors[2] = assignment2(colors[2], minx_blue, miny_blue, maxx_blue, maxy_blue,
 	pixels_blue, center)
 	#print colors[2]._center_mass
@@ -547,6 +574,8 @@ rel_maxiy, opening_yellow):
 	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
 	#print yellow_colours[2]._center_mass
 	
+	#print yellow_colours
+	
 	return yellow_colours
 	
 def yellow_det_dfs(yellow_colours, rel_minix, rel_miniy, rel_maxix, rel_maxiy, \
@@ -608,12 +637,20 @@ opening_yellow):
 	# Assigning color data to list
 	for x in range(len(yellow_colors2)):
 		# Yellow 1
-		minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = yellow_colors2[x][3],\
-		yellow_colors2[x][4], yellow_colors2[x][5], yellow_colors2[x][6]
-		pixels_yellow = yellow_colors2[x][0]
-		center = []
-		center.append(yellow_colors2[x][1])
-		center.append(yellow_colors2[x][2])
+		#print 'yellow2:',yellow_colors2
+		if len(yellow_colors2) > 0:
+			minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = yellow_colors2[x][3],\
+			yellow_colors2[x][4], yellow_colors2[x][5], yellow_colors2[x][6]
+			pixels_yellow = yellow_colors2[x][0]
+			center = []
+			center.append(yellow_colors2[x][1])
+			center.append(yellow_colors2[x][2])
+		else:
+			minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = 0, 0, 0, 0
+			pixels_yellow, center = 0, [0,0]
+		#print yellow_colors2
+		#print len(yellow_colors2)
+		#print x
 		yellow_colours[x] = assignment2(yellow_colours[x], minx_yellow, \
 		miny_yellow, maxx_yellow, maxy_yellow,
 		pixels_yellow, center)
@@ -625,357 +662,290 @@ opening_yellow):
 if __name__ == "__main__":
 	e1 = cv2.getTickCount()
 	
-	#cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(0)
 	
-	#while(True):
-	#ret, img = cap.read()
-	#if(ret):
-	# Number of robots
-	bot_num = 3
-	
-	# Colors structure
-	colors = []
-	for x in range(bot_num):
-		colors.append(circle_data())
-	
-	# Open image manually
-	img_name = 'pic17.png'
-	img = cv2.imread(img_name)
-	width, height,depth = img.shape
-	#print width, height
-
-	# HSV image
-	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-	# Create a black image, a window
-	#hsv = np.zeros((width,height,3), np.uint8)
-	#opening = np.zeros((width,height*4,3), np.uint8)
-	#cv2.namedWindow('hsv')
-	#cv2.namedWindow('max')
-	#erode_mask = img2  
-
-	# Colors
-	##red_low = np.array([0, 113, 64])
-	##red_up = np.array([13, 214, 142])
-	#red_low = np.array([0, 140, 80])
-	#red_up = np.array([179, 170, 122])
-	red_low2 = np.array([0, 42, 0])
-	red_up2 = np.array([12, 255, 182])
-	red_low3 = np.array([155, 42, 0])
-	red_up3 = np.array([179, 255, 182])
-
-	#green_low = np.array([68, 67, 25])
-	#green_up = np.array([100, 255, 100])
-	green_low = np.array([60, 100, 0])
-	green_up = np.array([96, 255, 91])
-
-	blue_low = np.array([104, 78, 0])
-	blue_up = np.array([130, 255, 124])
-
-	yellow_low = np.array([21, 50, 65])
-	yellow_up = np.array([36, 255, 122])
-	
-	#color_global_low = np.array([21, 0, 0])
-	#color_global_up = np.array([179, 255, 126])
-	color_global_low = np.array([0, 124, 0])
-	color_global_up = np.array([179, 255, 129])
-
-	# Threshold the HSV image
-	#red = cv2.inRange(hsv, red_low, red_up)
-	red = np.zeros((height,width,3), np.uint8)
-	red2 = cv2.inRange(hsv, red_low2, red_up2)
-	red3 = cv2.inRange(hsv, red_low3, red_up3)
-	red = cv2.bitwise_or(red2, red3, red)
-	green = cv2.inRange(hsv, green_low, green_up)
-	blue = cv2.inRange(hsv, blue_low, blue_up)
-	yellow = cv2.inRange(hsv, yellow_low, yellow_up)
-	#color_global = cv2.inRange(hsv, color_global_low, color_global_up)
-	
-	'''
-	# Showing hsv binary images
-	cv2.imshow('red',red)
-	cv2.waitKey(0)
-	cv2.imshow('green',green)
-	cv2.waitKey(0)
-	cv2.imshow('blue',blue)
-	cv2.waitKey(0)
-	cv2.imshow('yellow',yellow)
-	cv2.waitKey(0)
-	'''
-	
-	# Opening (Erode then dilate)
-	kernel = np.ones((5,5),np.uint8)
-	#erode_img = cv2.erode(img,kernel,iterations=2)
-	red_opening2 = cv2.morphologyEx(red, cv2.MORPH_OPEN, kernel)
-	green_opening2 = cv2.morphologyEx(green, cv2.MORPH_OPEN, kernel)
-	blue_opening2 = cv2.morphologyEx(blue, cv2.MORPH_OPEN, kernel)
-	yellow_opening2 = cv2.morphologyEx(yellow, cv2.MORPH_OPEN, kernel)
-	#color_glb_opening2 = cv2.morphologyEx(color_global, cv2.MORPH_OPEN, kernel)
-	
-	red_opening = cv2.dilate(red_opening2, kernel, iterations=1)
-	green_opening = cv2.dilate(green_opening2, kernel, iterations=1)
-	blue_opening = cv2.dilate(blue_opening2, kernel, iterations=1)
-	yellow_opening = cv2.dilate(yellow_opening2, kernel, iterations=1)
-	#color_glb_opening = cv2.dilate(color_glb_opening2, kernel, iterations=2)
-	# Images mixed
-	color_glb2 = np.zeros((height,width,3), np.uint8)
-	color_glb3 = np.zeros((height,width,3), np.uint8)
-	color_glb = np.zeros((height,width,3), np.uint8)
-	color_glb2 = cv2.bitwise_or(red_opening, green_opening, color_glb2)
-	color_glb3 = cv2.bitwise_or(color_glb2, blue_opening, color_glb3)
-	color_glb_opening = cv2.bitwise_or(color_glb3, yellow_opening, color_glb)
-	
-	#width2, height2 = red_opening.shape
-	#print width2, height2
-	
-	'''
-	# Showing opening images
-	cv2.imshow('red open',red_opening)
-	cv2.waitKey(0)
-	cv2.imshow('green open',green_opening)
-	cv2.waitKey(0)
-	cv2.imshow('blue open',blue_opening)
-	cv2.waitKey(0)
-	cv2.imshow('yellow open',yellow_opening)
-	cv2.waitKey(0)
-	#cv2.imshow('image',hsv)
-	#cv2.waitKey(0)
-	cv2.imshow('global open', color_glb_opening)
-	cv2.waitKey(0)
-	'''
-	
-	# Getting max and min relative values for further image processing
-
-	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
-	for y in range(height):
-		row = color_glb_opening[:,y]
-		#print row
-		max_row = max(row)
-		if max_row > 0:
-			if rel_maxy == 0 and rel_miny == 0:
-				#rel_maxx, rel_minx = x, x
-				rel_maxy, rel_miny = y, y
-			else:
-				if y > rel_maxy:
-					rel_maxy = y
-					
-	for x in range(width):
-		col = color_glb_opening[x,:]
-		max_col = max(col)
-		if max_col > 0:
-			if rel_maxx == 0 and rel_minx == 0:
-				rel_maxx, rel_minx = x, x
-				#rel_maxy, rel_miny = y, y
-			else:
-				if x > rel_maxx:
-					rel_maxx = x
-	
-	#print rel_maxx, rel_maxy, rel_minx, rel_miny
-	
-	# If colors are detected correctly
-	if (rel_maxy - rel_miny) < height / 4 and \
-	(rel_maxx - rel_minx) < width / 4:
-		
-		colors = color_det_count(colors, rel_minx, rel_miny, rel_maxx, \
-		rel_maxy, red_opening, green_opening, blue_opening)
-		
-	else:
-		
-		colors = color_det_dfs(colors, rel_minx, rel_miny, rel_maxx, rel_maxy, \
-		red_opening, green_opening, blue_opening)
-		
-	# Showing centers of mass on a new image and bounding boxes
-	img2 = img
-	#img2 = cv2.imread(img_name)
-	color = (0,255,0)
-	for x in range(len(colors)):
-		#print colors[x]._minx, colors[x]._miny, colors[x]._maxx, \
-		#colors[x]._maxy
-		img2[colors[x]._center_mass[0], colors[x]._center_mass[1]] = (0,255,0)
-		img2 = print_box(img2,colors[x],color)
-		'''
-		# Can save 0.0002 seconds
-		for z in range(4):
-			if z == 0:
-				for y in range(colors[x]._miny, colors[x]._maxy):
-					img2[colors[x]._minx,y] = (0,255,0)
-			if z == 1:
-				for y in range(colors[x]._miny, colors[x]._maxy):
-					img2[colors[x]._maxx,y] = (0,255,0)
-			if z == 2:
-				for y in range(colors[x]._minx, colors[x]._maxx):
-					img2[y,colors[x]._miny] = (0,255,0)	
-			else:
-				for y in range(colors[x]._minx, colors[x]._maxx):
-					img2[y,colors[x]._maxy] = (0,255,0)
-		'''
-
-	#cv2.imshow('center of mass',img2)
-	#cv2.waitKey(0)
-	
-	# Colors structure
-	yellow_colors = []
-	for x in range(bot_num):
-		yellow_colors.append(circle_data())
-		
-	# Yellow color structure
-	#yellow_colors2 = []
-	#for x in range(bot_num):
-	#	yellow_colors2.append(circle_data())
-	
-	#
-	#yellow_counter = 0
-	#yellow_labels = np.zeros((width,height), np.uint8)
-	
-	if (rel_maxy - rel_miny) < height / 4 and \
-	(rel_maxx - rel_minx) < width / 4:
-		
-		yellow_colors = yellow_det_count(yellow_colors, rel_minx, rel_miny, \
-		rel_maxx, rel_maxy, yellow_opening)
-		
-	else:
-		
-		#def yellow_det_dfs(yellow_colours, rel_minix, rel_miniy, rel_maxix, rel_maxiy, \
-		#opening_yellow):
-		yellow_colors = yellow_det_dfs(yellow_colors, rel_minx, rel_miny, \
-		rel_maxx, rel_maxy, yellow_opening)
-		#print 'SUPER'
-		"""
-		# DFS for yellow color
-		#width, height= labels.shape
-		#print width, height
-		first = 0
-		yellow_pixels = 0
-		cumulatives_yellow = 0
-		limits_yellow = 0
-		for y in range(rel_miny, rel_maxy):
-			for x in range(rel_minx, rel_maxx):
-				if yellow_opening[x,y] > 0 and yellow_labels[x,y] == 0:
-					#labels, counter = DFS(yellow_opening, labels, x, y, counter)
-					#print yellow_counter
-					yellow_labels, yellow_counter, yellow_pixels, \
-					cumulatives_yellow, limits_yellow = DFS2(yellow_opening,\
-					yellow_labels, x, y, yellow_counter)
-					
-					yellow_colors2.append([yellow_pixels, 
-					cumulatives_yellow[0]/yellow_pixels, cumulatives_yellow[1]/yellow_pixels, 
-					limits_yellow[0], limits_yellow[1], limits_yellow[2], 
-					limits_yellow[3]])
-					#print yellow_colors2
-					#return labels2, count, pix_num, [cumul_x, cumul_y], [minix, miniy, maxix, maxiy]
-		#np.set_printoptions(threshold='nan')
-		#print labels
-		
-		'''
-		test = Image.new('L', (height, width), "black")
-		test_pix = test.load()
-		print width, height
-		
-		for y in range(height):
-			for x in range(width):
-				if labels[x,y] > 0:
-					test_pix[x,y] = labels[x,y] * 20
-		test.show()
-		
-		test = [0]
-		for y in range(height):
-			for x in range(width):
-				if labels[x,y] > 0:
-					for z in range(len(test)):
-						if labels[x,y] == test[z]:
-							break
-						if z == len(test) - 1 and labels[x,y] != test[z]:
-							test.append(labels[x,y])
-		print test
-		'''
-		
-		# Reducing yellow color structure
-		yellow_colors2 = reducing_yellow(yellow_colors2)
-
-		# Assigning color data to list
-		for x in range(len(yellow_colors2)):
-			# Yellow 1
-			minx_yellow, miny_yellow, maxx_yellow, maxy_yellow = yellow_colors2[x][3],\
-			yellow_colors2[x][4], yellow_colors2[x][5], yellow_colors2[x][6]
-			pixels_yellow = yellow_colors2[x][0]
-			center = []
-			center.append(yellow_colors2[x][1])
-			center.append(yellow_colors2[x][2])
-			yellow_colors[x] = assignment2(yellow_colors[x], minx_yellow, \
-			miny_yellow, maxx_yellow, maxy_yellow,
-			pixels_yellow, center)
-			#print yellow_colors[0]._center_mass
-		"""
-	
-	# Showing centers of mass on a new image and bounding boxes
-	#img2 = cv2.imread('equ_3.png')
-	color = (0,255,255)
-	for x in range(len(yellow_colors)):
-		#print yellow_colors[x]._minx, yellow_colors[x]._miny, yellow_colors[x]._maxx, \
-		#yellow_colors[x]._maxy
-		img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,255)
-		img2 = print_box(img2,yellow_colors[x],color)
-	
-	#cv2.imshow('center of mass',img2)
-	#cv2.waitKey(0)
-		
-	# Choosing correspondence and calculating orientation
-	font = cv2.FONT_HERSHEY_SIMPLEX
-	minimum = 0
-	#distances = []
-	for x in range(len(yellow_colors)):
-		distances = []
-		xy_vals = []
-		for y in range(len(colors)):
-			#print x, y
-			distance = euclidean_dist(yellow_colors[x]._center_mass, colors[y]._center_mass)
-			distances.append(distance)
-			x_val = -yellow_colors[x]._center_mass[0] + \
-			colors[y]._center_mass[0]
-			y_val = -(height - yellow_colors[x]._center_mass[1]) + \
-			(height - colors[y]._center_mass[1])
-			xy_vals.append([x_val, y_val])
-		
-		# Orientation in degrees
-		minimum = min(distances)
-		for z in range(len(distances)):
-			if minimum == distances[z]:
-				angle_rad = math.atan2(xy_vals[z][1], xy_vals[z][0])
-				angle_deg = math.degrees(angle_rad)
-				
-				if angle_deg >= 0 and angle_deg <= 90:
-					angle_deg = 90 - angle_deg
-				elif angle_deg > 90 and angle_deg <= 180:
-					angle_deg = 360 + (90 - angle_deg)
-				else: 
-					#angle_deg < 0
-					angle_deg = 90 + (-1 * angle_deg)
-				
-				colors[z]._correspondence = x
-				colors[z]._orientation = int(angle_deg)
-				(a, b) = colors[z]._center_mass
-				# Printing angle as a string on image
-				cv2.putText(img2,str(int(angle_deg)),(a,b),font,0.75,
-				(255,255,255),1)
+	while(True):
+		ret, img = cap.read()
+		if(ret):
+			# Number of robots
+			bot_num = 3
 			
-	
-	'''
-	# Printing center of mass
-	for x in range(len(colors)):
-		print colors[x]._orientation
-		c = colors[x]._correspondence
-		#print c
-		print colors[x]._center_mass, yellow_colors[c]._center_mass
-	'''
-	
-	e2 = cv2.getTickCount()
-	time = (e2 - e1) / cv2.getTickFrequency()
-	print time
-	
-	cv2.imshow('center of mass',img2)
-	cv2.waitKey(0)
-	#if cv2.waitKey(1) & 0xFF == ord('q'):
-	#	break
-		
-	#cap.release()
+			# Colors structure
+			colors = []
+			for x in range(bot_num):
+				colors.append(circle_data())
+			
+			# Open image manually
+			#img_name = 'pic20.png'
+			#img = cv2.imread(img_name)
+			width, height,depth = img.shape
+			#print width, height
+
+			# HSV image
+			hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+			# Create a black image, a window
+			#hsv = np.zeros((width,height,3), np.uint8)
+			#opening = np.zeros((width,height*4,3), np.uint8)
+			#cv2.namedWindow('hsv')
+			#cv2.namedWindow('max')
+			#erode_mask = img2  
+
+			# Colors
+			##red_low = np.array([0, 113, 64])
+			##red_up = np.array([13, 214, 142])
+			#red_low = np.array([0, 140, 80])
+			#red_up = np.array([179, 170, 122])
+			red_low2 = np.array([0, 42, 0])
+			red_up2 = np.array([12, 255, 182])
+			red_low3 = np.array([155, 42, 0])
+			red_up3 = np.array([179, 255, 182])
+
+			#green_low = np.array([68, 67, 25])
+			#green_up = np.array([100, 255, 100])
+			green_low = np.array([60, 100, 0])
+			green_up = np.array([96, 255, 91])
+
+			blue_low = np.array([104, 78, 0])
+			blue_up = np.array([130, 255, 124])
+
+			yellow_low = np.array([21, 50, 65])
+			yellow_up = np.array([36, 255, 122])
+			
+			#color_global_low = np.array([21, 0, 0])
+			#color_global_up = np.array([179, 255, 126])
+			color_global_low = np.array([0, 124, 0])
+			color_global_up = np.array([179, 255, 129])
+
+			# Threshold the HSV image
+			#red = cv2.inRange(hsv, red_low, red_up)
+			red = np.zeros((height,width,3), np.uint8)
+			red2 = cv2.inRange(hsv, red_low2, red_up2)
+			red3 = cv2.inRange(hsv, red_low3, red_up3)
+			red = cv2.bitwise_or(red2, red3, red)
+			green = cv2.inRange(hsv, green_low, green_up)
+			blue = cv2.inRange(hsv, blue_low, blue_up)
+			yellow = cv2.inRange(hsv, yellow_low, yellow_up)
+			#color_global = cv2.inRange(hsv, color_global_low, color_global_up)
+			
+			'''
+			# Showing hsv binary images
+			cv2.imshow('red',red)
+			cv2.waitKey(0)
+			cv2.imshow('green',green)
+			cv2.waitKey(0)
+			cv2.imshow('blue',blue)
+			cv2.waitKey(0)
+			cv2.imshow('yellow',yellow)
+			cv2.waitKey(0)
+			'''
+			
+			# Opening (Erode then dilate)
+			kernel = np.ones((5,5),np.uint8)
+			#erode_img = cv2.erode(img,kernel,iterations=2)
+			red_opening2 = cv2.morphologyEx(red, cv2.MORPH_OPEN, kernel)
+			green_opening2 = cv2.morphologyEx(green, cv2.MORPH_OPEN, kernel)
+			blue_opening2 = cv2.morphologyEx(blue, cv2.MORPH_OPEN, kernel)
+			yellow_opening2 = cv2.morphologyEx(yellow, cv2.MORPH_OPEN, kernel)
+			#color_glb_opening2 = cv2.morphologyEx(color_global, cv2.MORPH_OPEN, kernel)
+			
+			red_opening = cv2.dilate(red_opening2, kernel, iterations=1)
+			green_opening = cv2.dilate(green_opening2, kernel, iterations=1)
+			blue_opening = cv2.dilate(blue_opening2, kernel, iterations=1)
+			yellow_opening = cv2.dilate(yellow_opening2, kernel, iterations=1)
+			#color_glb_opening = cv2.dilate(color_glb_opening2, kernel, iterations=2)
+			# Images mixed
+			color_glb2 = np.zeros((height,width,3), np.uint8)
+			color_glb3 = np.zeros((height,width,3), np.uint8)
+			color_glb = np.zeros((height,width,3), np.uint8)
+			color_glb2 = cv2.bitwise_or(red_opening, green_opening, color_glb2)
+			color_glb3 = cv2.bitwise_or(color_glb2, blue_opening, color_glb3)
+			color_glb_opening = cv2.bitwise_or(color_glb3, yellow_opening, color_glb)
+			
+			#width2, height2 = red_opening.shape
+			#print width2, height2
+			
+			'''
+			# Showing opening images
+			cv2.imshow('red open',red_opening)
+			cv2.waitKey(0)
+			cv2.imshow('green open',green_opening)
+			cv2.waitKey(0)
+			cv2.imshow('blue open',blue_opening)
+			cv2.waitKey(0)
+			cv2.imshow('yellow open',yellow_opening)
+			cv2.waitKey(0)
+			#cv2.imshow('image',hsv)
+			#cv2.waitKey(0)
+			cv2.imshow('global open', color_glb_opening)
+			cv2.waitKey(0)
+			'''
+			
+			# Getting max and min relative values for further image processing
+
+			rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
+			for y in range(height):
+				row = color_glb_opening[:,y]
+				#print row
+				max_row = max(row)
+				if max_row > 0:
+					if rel_maxy == 0 and rel_miny == 0:
+						#rel_maxx, rel_minx = x, x
+						rel_maxy, rel_miny = y, y
+					else:
+						if y > rel_maxy:
+							rel_maxy = y
+							
+			for x in range(width):
+				col = color_glb_opening[x,:]
+				max_col = max(col)
+				if max_col > 0:
+					if rel_maxx == 0 and rel_minx == 0:
+						rel_maxx, rel_minx = x, x
+						#rel_maxy, rel_miny = y, y
+					else:
+						if x > rel_maxx:
+							rel_maxx = x
+			
+			#print rel_maxx, rel_maxy, rel_minx, rel_miny
+			
+			# If colors are detected correctly
+			if (rel_maxy - rel_miny) < height / 4 and \
+			(rel_maxx - rel_minx) < width / 4:
+				
+				colors = color_det_count(colors, rel_minx, rel_miny, rel_maxx, \
+				rel_maxy, red_opening, green_opening, blue_opening)
+				
+			else:
+				
+				colors = color_det_dfs(colors, rel_minx, rel_miny, rel_maxx, rel_maxy, \
+				red_opening, green_opening, blue_opening)
+				
+			# Showing centers of mass on a new image and bounding boxes
+			img2 = img
+			#img2 = cv2.imread(img_name)
+			color = (0,255,0)
+			for x in range(len(colors)):
+				#print colors[x]._minx, colors[x]._miny, colors[x]._maxx, \
+				#colors[x]._maxy
+				img2[colors[x]._center_mass[0], colors[x]._center_mass[1]] = (0,255,0)
+				img2 = print_box(img2,colors[x],color)
+				'''
+				# Can save 0.0002 seconds
+				for z in range(4):
+					if z == 0:
+						for y in range(colors[x]._miny, colors[x]._maxy):
+							img2[colors[x]._minx,y] = (0,255,0)
+					if z == 1:
+						for y in range(colors[x]._miny, colors[x]._maxy):
+							img2[colors[x]._maxx,y] = (0,255,0)
+					if z == 2:
+						for y in range(colors[x]._minx, colors[x]._maxx):
+							img2[y,colors[x]._miny] = (0,255,0)	
+					else:
+						for y in range(colors[x]._minx, colors[x]._maxx):
+							img2[y,colors[x]._maxy] = (0,255,0)
+				'''
+
+			#cv2.imshow('center of mass',img2)
+			#cv2.waitKey(0)
+			
+			# Colors structure
+			yellow_colors = []
+			for x in range(bot_num):
+				yellow_colors.append(circle_data())
+
+			#
+			if (rel_maxy - rel_miny) < height / 4 and \
+			(rel_maxx - rel_minx) < width / 4:
+				
+				yellow_colors = yellow_det_count(yellow_colors, rel_minx, rel_miny, \
+				rel_maxx, rel_maxy, yellow_opening)
+				
+			else:
+			
+				yellow_colors = yellow_det_dfs(yellow_colors, rel_minx, rel_miny, \
+				rel_maxx, rel_maxy, yellow_opening)
+			
+			# Showing centers of mass on a new image and bounding boxes
+			#img2 = cv2.imread('equ_3.png')
+			color = (0,255,255)
+			#print len(yellow_colors)
+			#print yellow_colors
+			for x in range(len(yellow_colors)):
+				#print yellow_colors[x]._minx, yellow_colors[x]._miny, yellow_colors[x]._maxx, \
+				#yellow_colors[x]._maxy
+				if len(yellow_colors[x]._center_mass) == 0:
+					yellow_colors[x]._center_mass = [width / 2 , height / 2]
+				else:
+					img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,255)
+					img2 = print_box(img2,yellow_colors[x],color)
+			
+			#cv2.imshow('center of mass',img2)
+			#cv2.waitKey(0)
+				
+			# Choosing correspondence and calculating orientation
+			font = cv2.FONT_HERSHEY_SIMPLEX
+			minimum = 0
+			#distances = []
+			for x in range(len(yellow_colors)):
+				distances = []
+				xy_vals = []
+				for y in range(len(colors)):
+					#print x, y
+					distance = euclidean_dist(yellow_colors[x]._center_mass, 
+					colors[y]._center_mass)
+					distances.append(distance)
+					x_val = -yellow_colors[x]._center_mass[0] + \
+					colors[y]._center_mass[0]
+					y_val = -(height - yellow_colors[x]._center_mass[1]) + \
+					(height - colors[y]._center_mass[1])
+					xy_vals.append([x_val, y_val])
+				
+				# Orientation in degrees
+				minimum = min(distances)
+				for z in range(len(distances)):
+					if minimum == distances[z]:
+						#print distances[z]
+						angle_rad = math.atan2(xy_vals[z][1], xy_vals[z][0])
+						angle_deg = math.degrees(angle_rad)
+						
+						if angle_deg >= 0 and angle_deg <= 90:
+							angle_deg = 90 - angle_deg
+						elif angle_deg > 90 and angle_deg <= 180:
+							angle_deg = 360 + (90 - angle_deg)
+						else: 
+							#angle_deg < 0
+							angle_deg = 90 + (-1 * angle_deg)
+						
+						colors[z]._correspondence = x
+						colors[z]._orientation = int(angle_deg)
+						(a, b) = colors[z]._center_mass
+						# Printing angle as a string on image
+						if distances[z] <= 35:
+							cv2.putText(img2,str(int(angle_deg)),(a,b),font,0.75,
+							(255,255,255),1)
+						else:
+							cv2.putText(img2,'Color no detected',(0,20),font,0.5,
+							(255,255,255),1)
+					
+			'''
+			# Printing center of mass
+			for x in range(len(colors)):
+				print colors[x]._orientation
+				c = colors[x]._correspondence
+				#print c
+				print colors[x]._center_mass, yellow_colors[c]._center_mass
+			'''
+			
+			e2 = cv2.getTickCount()
+			time = (e2 - e1) / cv2.getTickFrequency()
+			print time
+			
+			cv2.imshow('center of mass',img2)
+			#cv2.waitKey(0)
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+			
+	cap.release()
 	cv2.destroyAllWindows()
