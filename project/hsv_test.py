@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 import math
+import nxt.locator			# Tests with NXT
+from nxt.motor import *		# Tests with NXT
 #import time
 
 class circle_data:
@@ -660,6 +662,9 @@ opening_yellow):
 	
 # Main function
 if __name__ == "__main__":
+
+	robot = nxt.locator.find_one_brick(name = 'NXT1')
+	
 	e1 = cv2.getTickCount()
 	
 	cap = cv2.VideoCapture(0)
@@ -922,7 +927,7 @@ if __name__ == "__main__":
 						colors[z]._orientation = int(angle_deg)
 						(a, b) = colors[z]._center_mass
 						# Printing angle as a string on image
-						if distances[z] <= 35:
+						if distances[z] <= 50:
 							cv2.putText(img2,str(int(angle_deg)),(a,b),font,0.75,
 							(255,255,255),1)
 						else:
@@ -942,10 +947,18 @@ if __name__ == "__main__":
 			time = (e2 - e1) / cv2.getTickFrequency()
 			print time
 			
+			
 			cv2.imshow('center of mass',img2)
 			#cv2.waitKey(0)
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
+			
+			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
+				m_left = Motor(robot, PORT_B)
+				m_left.turn(100, 90)
+			elif colors[1]._orientation >= 270 and colors[1]._orientation <= 359:
+				m_right = Motor(robot, PORT_B)
+				m_right.turn(-100, 90)
 			
 	cap.release()
 	cv2.destroyAllWindows()
