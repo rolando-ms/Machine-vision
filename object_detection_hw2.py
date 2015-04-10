@@ -256,6 +256,8 @@ def object_detection(original_obj, original_obj_pix):
 	# Normalizing angles and storing into im3
 	im3 = Image.new('L', (width,height), "black")
 	pixels3 = im3.load()
+	img_test = Image.new('L', (width,height), "black")
+	pixels_test = img_test.load()
 	labels_img = Image.new('L',(width,height), 'black')
 	labels_aux = labels_img.load()
 	angle_max, angle_min = 0.0, 0.0
@@ -263,14 +265,22 @@ def object_detection(original_obj, original_obj_pix):
 		for x in range(width):
 			# Angle 0 was substituted by 5
 			if angle[x,y] == 5:
-				pixels3[x,y] = (math.pi) * (255 / (2 * math.pi) + 0.01)
+				pixels3[x,y] = (math.pi) * (255 / (2 * math.pi) + 0.01) # 0.01 added to avoid an error
 				labels_aux[x,y] = pixels3[x,y]
 			elif angle[x,y] != 0:
-				pixels3[x,y] = (angle[x,y] + math.pi) * (255 / (2 * math.pi) + 0.15)
+				pixels3[x,y] = (angle[x,y] + math.pi) * (255 / (2 * math.pi) + 0.15) # 0.15 added to avoid having zeros after normalization
 				labels_aux[x,y] = pixels3[x,y]
-	
+			if angle[x,y] < 0:
+				pixels_test[x,y] = 50
+			elif angle[x,y] > 0:
+				pixels_test[x,y] = 130
+			
+			if angle[x,y] == 5:
+				pixels_test[x,y] = 255
+
 	# Angles image
 	#im3.show()
+	#img_test.show()
 	#im3.save('angles.png')
 
 	quadrants = 24 # Quadrants to analyse
@@ -343,21 +353,87 @@ def object_detection(original_obj, original_obj_pix):
 				number += -1
 			else:
 				number += -1
-
+	
+	
 	# Counting sides of each object. It must have more than 10 pixels
 	# to be counted as a side. This counts the changes from "high" to 
 	# "low".
+	segments_aux = []
+	segments2 = []
 	sides = []
 	for x in range(len(segments)):
 		sides.append(0)
+		segments2.append([])
 		for y in range(len(segments[x])):
+			print len(segments[x][y])
 			if len(segments[x][y]) > 10 and \
 			y == len(segments[x]) - 1:
 				sides[x] += 1
 			elif len(segments[x][y]) > 10 and \
 			len(segments[x][y+1]) < 10:
 				sides[x] += 1
+			
+			if y == 0 and len(segments[x][y]) > 10:
+				segments_aux = segments[x][y]
+			
+			if y != 0 and len(segments[x][y]) > 10 and \
+			len(segments[x][y - 1]) < 10:
+				segments_aux = segments[x][y]
+			
+			if y != 0 and len(segments[x][y]) > 10 and \
+			len(segments[x][y - 1]) > 10:
+				segments_aux += segments[x][y]
+			
+			if y != 0 and len(segments[x][y]) < 10 and \
+			len(segments[x][y - 1]) > 10:
+				segments2[x].append(segments_aux)
+				segments_aux = []
+			
+			if len(segments[x][y]) > 10 and \
+			len(segments[x][y - 1]) > 10 and \
+			y == len(segments[x]) - 1:
+				segments_aux += segments[x][y]
+				segments2[x].append(segments_aux)
+				segments_aux = []
 				
+			if len(segments[x][y]) > 10 and \
+			len(segments[x][y - 1]) < 10 and \
+			y == len(segments[x]) - 1:
+				segments_aux = segments[x][y]
+				segments2[x].append(segments_aux)
+				segments_aux = []
+		
+		#print 'Segments 2'
+		#print segments2[x]
+		#print len(segments2[x])
+	
+	segments = segments2	
+		
+
+	'''		
+	for x in range(len(sides)):
+		print 'sides =', sides[x]
+		if sides[x] > 2 and sides[x] < 8 and sides[x] != 4:
+			for y in range(len(segments[x])):
+				#print 'inside'
+				#print segments[x][y]
+				#print len(segments[x][y])
+				print (len(segments[x][y]) - 1)
+				print (len(segments[x][y]) - y - 1)
+				print len(segments[x][len(segments[x][y]) - y - 1])
+				
+				if len(segments[x][len(segments[x][y]) - y - 1]) > 10 and \
+				len(segments[x][len(segments[x][y]) - y - 2]) > 10 and \
+				y < (len(segments[x][y]) - 1):
+					segments[x][len(segments[x][y]) - y - 2] += \
+					segments[x][len(segments[x][y]) - y - 1]
+					segments[x].pop(len(segments[x][y]) - y - 1)
+				if y == len(segments[x][y]) - 1 and \
+				len(segments[x][len(segments[x][y]) - y]) > 10:
+					segments[x][len(segments[x][y]) - y - 1] += \
+					segments[x][len(segments[x][y]) - y]
+					segments[x].pop(len(segments[x][y]) - y)
+	'''			
 	# Printing bounding boxes
 	# sides < 3 ==> C (circle)
 	# sides =3 ==> T3 (Triangle)
@@ -388,7 +464,7 @@ def object_detection(original_obj, original_obj_pix):
 			objects2[z]._sides = detected[number][2]
 
 	#objs.show()
-	return objs, segments, im3, objects2
+	return objs, segments, im3, objects2, angle
 
 # Main function
 if __name__ == "__main__":
@@ -398,5 +474,5 @@ if __name__ == "__main__":
 	img = Image.open(imgspath + name)
 	pixels = img.load()
 	
-	detected, segment, angles_norm, objs_data = object_detection(img,pixels)
+	detected, segment, angles_norm, objs_data, angle_rads = object_detection(img,pixels)
 	detected.show()
