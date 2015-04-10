@@ -123,9 +123,14 @@ if __name__ == "__main__":
 	#print objs_data[0]._sides
 	#print segment[0]
 	
+	# Transforming PIL image to opencv image
+	img2 = Image.open(imgspath + name).convert('RGB')
+	lines_rgb = np.array(img2)
+	lines = lines_rgb[:,:,::-1].copy()
+	
 	# Numpy array to store fitted lines
 	width, height = objects.size
-	lines = np.zeros((height,width,3), np.uint8)
+	#lines = np.zeros((height,width,3), np.uint8)
 	z = 0
 	# Taking all segments and running line fitting
 	for x in range(len(segment)):
@@ -155,8 +160,8 @@ if __name__ == "__main__":
 				#print endpoint
 				#inipoint, endpoint = linefitting(segment_points, angles_rads)
 				# Drawing fitted lines into lines array 
-				if x == 4:
-					cv2.line(lines, inipoint, endpoint,(z,z,255),1)
+				#if x == 3 or x == 0:
+				cv2.line(lines, inipoint, endpoint,(z,z,255),1)
 		z += 40
 	'''
 	angles_pixs = angles_news.load()
