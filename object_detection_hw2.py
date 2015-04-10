@@ -365,7 +365,7 @@ def object_detection(original_obj, original_obj_pix):
 		sides.append(0)
 		segments2.append([])
 		for y in range(len(segments[x])):
-			print len(segments[x][y])
+			#print len(segments[x][y])
 			if len(segments[x][y]) > 10 and \
 			y == len(segments[x]) - 1:
 				sides[x] += 1
