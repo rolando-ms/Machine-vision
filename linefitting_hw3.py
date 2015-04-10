@@ -1,16 +1,10 @@
 from lab import modules_lab as modlab # Here I have my lab modules
 from lecture import modules_lecture as modlec # Here I have my lecture modules
-#from edge_detection import edge_detection
 from object_detection_hw2 import object_detection
 from PIL import Image
-#from PIL import ImageFont # Use fonts
-#from PIL import ImageDraw # Draw texts
 import math
 import numpy as np
-#import time # to use time.sleep('time in seconds')
-#import os # to construct a path relative to this script
 import cv2 # Open cv library
-#import matplotlib.pyplot as plt
 
 #---------------------
 # Line fitting module
@@ -89,17 +83,12 @@ def linefitting(points, angles_rad):
 		else:
 			for b in range(len(rho_angle_pairs)):
 				if rho_angle == rho_angle_pairs[b]:
-					#print rho_angle
-					#print rho_angle_pairs
-					#print b
-					#print repetitions
 					repetitions[b][0] += 1
 					break
 				else:
 					if b == (len(rho_angle_pairs) - 1):
 						rho_angle_pairs.append(rho_angle)
 						repetitions.append([1])
-						#print rho_angle[1] - math.pi
 	
 	# Choosing most repeated pair
 	for a in range(len(rho_angle_pairs)):
@@ -128,9 +117,8 @@ if __name__ == "__main__":
 	lines_rgb = np.array(img2)
 	lines = lines_rgb[:,:,::-1].copy()
 	
-	# Numpy array to store fitted lines
 	width, height = objects.size
-	#lines = np.zeros((height,width,3), np.uint8)
+
 	z = 0
 	# Taking all segments and running line fitting
 	for x in range(len(segment)):
@@ -158,23 +146,12 @@ if __name__ == "__main__":
 					x2 = x1
 				endpoint = (x2,y2)
 				#print endpoint
-				#inipoint, endpoint = linefitting(segment_points, angles_rads)
+
 				# Drawing fitted lines into lines array 
 				#if x == 3 or x == 0:
 				cv2.line(lines, inipoint, endpoint,(z,z,255),1)
 		z += 40
-	'''
-	angles_pixs = angles_news.load()
-	angles_new2 = Image.new('RGB', (width,height), "black")
-	angles_pix2 = angles_new2.load()
-	for y in range(height):
-		for x in range(width):
-			if (angles_pixs[x,y] * (180/math.pi)) > 360:
-				angles_pix2[x,y] = (255,0,0)
-	'''
-	print 'height = ', height
-	print 'width = ', width
-	#angles_new2.show()
+
 	# Showing results
 	objects.show()
 	cv2.imshow('image',lines)
