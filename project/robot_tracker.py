@@ -33,6 +33,8 @@ import math					# To calculate data
 import nxt.locator			# Tests with NXT
 from nxt.motor import *		# Tests with NXT
 from Tkinter import *		# To make the GUI
+from nxt.motor import Motor, PORT_B, PORT_C	# Distance tests with NXT
+from nxt.sensor import Ultrasonic, PORT_4	# Distance tests with NXT
 #import time
 
 # This class includes all the needed data of a detected object.
@@ -56,6 +58,11 @@ class circle_data:
 		self._center_mass = []
 		self._correspondence = 0
 		self._orientation = 0
+		
+class default:
+	def_vals = [0, 42, 0, 12, 255, 182, 155, 42, 0, 179, 255, 182,
+	60, 100, 0, 96, 255, 91, 104, 78, 0, 130, 255, 124, 21, 50, 65,
+	36, 255, 122]
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -143,7 +150,7 @@ def DFS(image, labels2, x2, y2, count):
 	count += 1			# Label counter
 	remaining = 0		# Remaining pixels to count in the neighborhood
 	first_time = 0		# Flag of first time run
-	count_aux = 0		# Auxiliar label counter
+	count_aux = 0		# auxiliary label counter
 	#pix_num, cumul_x, cumul_y = 0, 0, 0
 	#minix, miniy, maxix, maxiy = 0, 0, 0, 0
 	
@@ -178,7 +185,7 @@ def DFS(image, labels2, x2, y2, count):
 			stack.append([c + a_aux,d + b_aux])
 			c, d = c_aux, d_aux
 		elif remaining == 1:
-			# Using auxiliar coordinates without saving them
+			# Using auxiliary coordinates without saving them
 			c, d = c_aux, d_aux
 		else:
 			# Popping pixel without remaining neighbors
@@ -249,7 +256,7 @@ def DFS2(image, labels2, x2, y2, count):
 			stack.append([c + a_aux,d + b_aux])
 			c, d = c_aux, d_aux
 		elif remaining == 1:
-			# Using auxiliar coordinates without saving them
+			# Using auxiliary coordinates without saving them
 			c, d = c_aux, d_aux
 		else:
 			# Popping pixel without remaining neighbors
@@ -398,7 +405,7 @@ opening_red, opening_green, opening_blue):
 	# Getting color data
 	for y in range(rel_miniy, rel_maxiy):
 		for x in range(rel_minix, rel_maxix):
-			# Getting data with DFS2 and appending to auxiliar list
+			# Getting data with DFS2 and appending to auxiliary list
 			# Red
 			if opening_red[x,y] > 0 and red_labels[x,y] == 0:
 				red_labels, red_counter, pixels, cumulatives, limits = \
@@ -670,7 +677,8 @@ opening_yellow):
 	
 def robot_detection():
 	# Connecting pc with NXT robot via bluetooth 
-	#robot = nxt.locator.find_one_brick(name = 'NXT1')
+	#brick = nxt.locator.find_one_brick(name = 'NXT1')
+	#robot = Robot(brick)
 	
 	# Starting time counter to measure elapsed time
 	e1 = cv2.getTickCount()
@@ -957,12 +965,12 @@ def robot_detection():
 				break
 			
 			'''
-			# Moving robot according to the deteted angle
+			# Moving robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
-				m_left = Motor(robot, PORT_B)
+				m_left = Motor(brick, PORT_B)
 				m_left.turn(100, 90)
 			elif colors[1]._orientation >= 270 and colors[1]._orientation <= 359:
-				m_right = Motor(robot, PORT_B)
+				m_right = Motor(brick, PORT_B)
 				m_right.turn(-100, 90)
 			'''
 			
@@ -1052,10 +1060,66 @@ def thres_adj():
 	cap.release()
 	cv2.destroyAllWindows()
 
+def read_line(lines2, y2,thres):
+	h, s, v = '', '', ''
+	for a in range(2,len(lines2[y2+2])):
+		if lines2[y2+2][a] == '\n':
+			break
+		h += lines2[y2+2][a]
+	#print 'h=' , int(h)
+	thres.append(int(h))
 	
+	for a in range(2,len(lines2[y2+3])):
+		if lines2[y2+3][a] == '\n':
+			break
+		s += lines2[y2+3][a]
+	#print 's=' , int(s)
+	thres.append(int(s))
+	
+	for a in range(2,len(lines2[y2+4])):
+		if lines2[y2+4][a] == '\n':
+			break
+		v += lines2[y2+4][a]
+	#print 'v=' , int(v)
+	thres.append(int(v))
+	
+	return thres
+	
+def read_file(file1):
+	color_thres = ['red2\n','red3\n','green\n','blue\n','yellow\n']
+	with file1 as f:
+		lines = f.readlines()
+
+	up = 'up\n'
+	low = 'low\n'
+	thresholds = []	
+
+	for x in range(len(color_thres)):
+		for y in range(len(lines)):
+			first = 0
+			if lines[y] == color_thres[x]:
+				if lines[y+1] == low and lines[y] == color_thres[x]:
+
+					thresholds = read_line(lines, y, thresholds)
+
+				if lines[y+1] == up and lines[y] == color_thres[x]:
+					thresholds = read_line(lines, y, thresholds)
+					break
+
+	return thresholds
+	
+# This module shows the binary images with the current thresholds	
 def show_hsv_binary():
 	# Choosing camera
 	cap = cv2.VideoCapture(0)
+
+	# Getting thresholds from file
+	try:
+		file = open('test1.txt', 'r')
+		thr = read_file(file)
+	except IOError, ErrorValue:
+		print 'File not found or corrupted. Using defaults.'
+		thr = default.def_vals
 
 	while(True):
 		# Capture frame
@@ -1070,34 +1134,34 @@ def show_hsv_binary():
 
 			# RGB to HSV transformation
 			hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
+			
 			# Colors
 			##red_low = np.array([0, 113, 64])
 			##red_up = np.array([13, 214, 142])
 			#red_low = np.array([0, 140, 80])
 			#red_up = np.array([179, 170, 122])
-			red_low2 = np.array([0, 42, 0])
-			red_up2 = np.array([12, 255, 182])
-			red_low3 = np.array([155, 42, 0])
-			red_up3 = np.array([179, 255, 182])
+			red_low2 = np.array([thr[0], thr[1], thr[2]])
+			red_up2 = np.array([thr[3], thr[4], thr[5]])
+			red_low3 = np.array([thr[6], thr[7], thr[8]])
+			red_up3 = np.array([thr[9], thr[10], thr[11]])
 
 			#green_low = np.array([68, 67, 25])
 			#green_up = np.array([100, 255, 100])
-			green_low = np.array([60, 100, 0])
-			green_up = np.array([96, 255, 91])
+			green_low = np.array([thr[12], thr[13], thr[14]])
+			green_up = np.array([thr[15], thr[16], thr[17]])
 
-			blue_low = np.array([104, 78, 0])
-			blue_up = np.array([130, 255, 124])
+			blue_low = np.array([thr[18], thr[19], thr[20]])
+			blue_up = np.array([thr[21], thr[22], thr[23]])
 
-			yellow_low = np.array([21, 50, 65])
-			yellow_up = np.array([36, 255, 122])
+			yellow_low = np.array([thr[24], thr[25], thr[26]])
+			yellow_up = np.array([thr[27], thr[28], thr[29]])
 			
 			#color_global_low = np.array([21, 0, 0])
 			#color_global_up = np.array([179, 255, 126])
-			color_global_low = np.array([0, 124, 0])
-			color_global_up = np.array([179, 255, 129])
+			#color_global_low = np.array([0, 124, 0])
+			#color_global_up = np.array([179, 255, 129])
 
-			# Threshold the HSV image
+			# Thresholding the HSV image
 			#red = cv2.inRange(hsv, red_low, red_up)
 			red = np.zeros((height,width,3), np.uint8)
 			red2 = cv2.inRange(hsv, red_low2, red_up2)
