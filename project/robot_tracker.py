@@ -63,6 +63,8 @@ class default:
 	def_vals = [0, 42, 0, 12, 255, 182, 155, 42, 0, 179, 255, 182,
 	60, 100, 0, 96, 255, 91, 104, 78, 0, 130, 255, 124, 21, 50, 65,
 	36, 255, 122]
+	
+	file_name = 'test.txt'
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -1115,7 +1117,7 @@ def show_hsv_binary():
 
 	# Getting thresholds from file
 	try:
-		file = open('test1.txt', 'r')
+		file = open(default.file_name, 'r')
 		thr = read_file(file)
 	except IOError, ErrorValue:
 		print 'File not found or corrupted. Using defaults.'
@@ -1136,17 +1138,11 @@ def show_hsv_binary():
 			hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 			
 			# Colors
-			##red_low = np.array([0, 113, 64])
-			##red_up = np.array([13, 214, 142])
-			#red_low = np.array([0, 140, 80])
-			#red_up = np.array([179, 170, 122])
 			red_low2 = np.array([thr[0], thr[1], thr[2]])
 			red_up2 = np.array([thr[3], thr[4], thr[5]])
 			red_low3 = np.array([thr[6], thr[7], thr[8]])
 			red_up3 = np.array([thr[9], thr[10], thr[11]])
 
-			#green_low = np.array([68, 67, 25])
-			#green_up = np.array([100, 255, 100])
 			green_low = np.array([thr[12], thr[13], thr[14]])
 			green_up = np.array([thr[15], thr[16], thr[17]])
 
@@ -1155,11 +1151,6 @@ def show_hsv_binary():
 
 			yellow_low = np.array([thr[24], thr[25], thr[26]])
 			yellow_up = np.array([thr[27], thr[28], thr[29]])
-			
-			#color_global_low = np.array([21, 0, 0])
-			#color_global_up = np.array([179, 255, 126])
-			#color_global_low = np.array([0, 124, 0])
-			#color_global_up = np.array([179, 255, 129])
 
 			# Thresholding the HSV image
 			#red = cv2.inRange(hsv, red_low, red_up)
@@ -1170,8 +1161,6 @@ def show_hsv_binary():
 			green = cv2.inRange(hsv, green_low, green_up)
 			blue = cv2.inRange(hsv, blue_low, blue_up)
 			yellow = cv2.inRange(hsv, yellow_low, yellow_up)
-			#color_global = cv2.inRange(hsv, color_global_low, color_global_up)
-			
 			
 			# Showing hsv binary images
 			cv2.imshow('red',red)
