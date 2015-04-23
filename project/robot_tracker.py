@@ -30,6 +30,7 @@
 import cv2					# For image preprocessing and printing
 import numpy as np			# Requirement for OpenCV
 import math					# To calculate data
+import time
 import nxt.locator			# Tests with NXT
 from nxt.motor import *		# Tests with NXT
 from Tkinter import *		# To make the GUI
@@ -65,6 +66,8 @@ class default:
 	36, 255, 122]
 	
 	file_name = 'test.txt'
+	
+	colors_used = ['red2\n','red3\n','green\n','blue\n','yellow\n']
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -283,20 +286,23 @@ def reducing_color(color_struct):
 	color_len = len(color_struct)
 	if color_len > 1:
 		for x in range(color_len):
-			if color_struct[color_len - x - 1][0] < 320 or \
-			color_struct[color_len - x - 1][0] > 520:
-				# Popping from structure if the object is too small or 
-				# too big
-				color_struct.pop(color_len - x - 1)
-			if x == color_len - 1 and len(color_struct) > 1:
-				# Getting max. list value
-				for y in range(len(color_struct)):
-					if color_struct[len(color_struct) - x - 1][0] > max:
-						max = color_struct[len(color_struct) - x - 1][0]
-				# Leaving only the max. value
-				for y in range(len(color_struct)):
-					if color_struct[len(color_struct) - x - 1][0] != max:
-						color_struct.pop(len(color_struct) - x - 1)
+			try:
+				if color_struct[color_len - x - 1][0] < 320 or \
+				color_struct[color_len - x - 1][0] > 520:
+					# Popping from structure if the object is too small or 
+					# too big
+					color_struct.pop(color_len - x - 1)
+				if x == color_len - 1 and len(color_struct) > 1:
+					# Getting max. list value
+					for y in range(len(color_struct)):
+						if color_struct[len(color_struct) - x - 1][0] > max:
+							max = color_struct[len(color_struct) - x - 1][0]
+					# Leaving only the max. value
+					for y in range(len(color_struct)):
+						if color_struct[len(color_struct) - x - 1][0] != max:
+							color_struct.pop(len(color_struct) - x - 1)
+			except IndexError:
+				print 'Using first value.'
 	return color_struct
 
 # This module reduces the yellow color structure when supposedly the 3 
@@ -682,6 +688,14 @@ def robot_detection():
 	#brick = nxt.locator.find_one_brick(name = 'NXT1')
 	#robot = Robot(brick)
 	
+	# Getting thresholds from file
+	try:
+		file = open(default.file_name, 'r')
+		thr = read_file(file)
+	except IOError, ErrorValue:
+		print 'File not found or corrupted. Using defaults.'
+		thr = default.def_vals
+	
 	# Starting time counter to measure elapsed time
 	e1 = cv2.getTickCount()
 	
@@ -713,31 +727,19 @@ def robot_detection():
 
 			# Colors. (Thresholds for binarization)
 			# Red seems to work better with 2 thresholds
-			##red_low = np.array([0, 113, 64])
-			##red_up = np.array([13, 214, 142])
-			#red_low = np.array([0, 140, 80])
-			#red_up = np.array([179, 170, 122])
-			red_low2 = np.array([0, 42, 0])
-			red_up2 = np.array([12, 255, 182])
-			red_low3 = np.array([155, 42, 0])
-			red_up3 = np.array([179, 255, 182])
-			
-			#green_low = np.array([68, 67, 25])
-			#green_up = np.array([100, 255, 100])
-			green_low = np.array([60, 100, 0])
-			green_up = np.array([96, 255, 91])
+			red_low2 = np.array([thr[0], thr[1], thr[2]])
+			red_up2 = np.array([thr[3], thr[4], thr[5]])
+			red_low3 = np.array([thr[6], thr[7], thr[8]])
+			red_up3 = np.array([thr[9], thr[10], thr[11]])
 
-			blue_low = np.array([104, 78, 0])
-			blue_up = np.array([130, 255, 124])
+			green_low = np.array([thr[12], thr[13], thr[14]])
+			green_up = np.array([thr[15], thr[16], thr[17]])
 
-			yellow_low = np.array([21, 50, 65])
-			yellow_up = np.array([36, 255, 122])
-			
-			# Global thresholds (Max. and min. of all colors)
-			#color_global_low = np.array([21, 0, 0])
-			#color_global_up = np.array([179, 255, 126])
-			#color_global_low = np.array([0, 124, 0])
-			#color_global_up = np.array([179, 255, 129])
+			blue_low = np.array([thr[18], thr[19], thr[20]])
+			blue_up = np.array([thr[21], thr[22], thr[23]])
+
+			yellow_low = np.array([thr[24], thr[25], thr[26]])
+			yellow_up = np.array([thr[27], thr[28], thr[29]])
 
 			# Thresholding the HSV images
 			#red = cv2.inRange(hsv, red_low, red_up)
@@ -997,6 +999,31 @@ def show_cam():
 	cap.release()
 	cv2.destroyAllWindows()
 
+def write_new_vals(color,hmini,smini,vmini,hmaxi,smaxi,vmaxi,file1):
+	with file1 as f:
+		lines = f.readlines()
+		
+	# Writing values
+	for y in range(len(lines)):
+		if lines[y] == color:
+			for z in range(y,len(lines)):
+				print 'equal'
+				if lines[z] == 'low\n':
+					lines[z+1] = 'h=' + str(hmini) + '\n'
+					lines[z+2] = 's=' + str(smini) + '\n'
+					lines[z+3] = 'v=' + str(vmini) + '\n'
+				
+				if lines[z] == 'up\n':
+					lines[z+1] = 'h=' + str(hmaxi) + '\n'
+					lines[z+2] = 's=' + str(smaxi) + '\n'
+					lines[z+3] = 'v=' + str(vmaxi) + '\n'
+					break
+	#file1.close()
+
+	file1 = open(default.file_name, 'w')
+	with file1 as f:
+		f.writelines(lines)
+	
 # Module used in thres_adj	
 def nothing(x):
 	pass
@@ -1017,6 +1044,13 @@ def thres_adj():
 	cv2.createTrackbar('Hmax','sliders',179,179,nothing)
 	cv2.createTrackbar('Smax','sliders',255,255,nothing)
 	cv2.createTrackbar('Vmax','sliders',255,255,nothing)
+	
+	# Creating window
+	cv2.namedWindow('save data')
+	#saving = '0 : Nothing \n1 : Save'
+	cv2.createTrackbar('save','save data',0,1,nothing)
+	#colors_used = '0 : red2 \n1 : red3 \n2 : green \n3 : blue \n4 : yellow '
+	cv2.createTrackbar('r2r3gby','save data',0,4,nothing)
 
 	# Choosing camera
 	cap = cv2.VideoCapture(0)
@@ -1057,7 +1091,29 @@ def thres_adj():
 			# Press "q" to exit
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
-		
+			
+			# Getting trackbar positions to choose whether to save
+			# or not
+			get_save = cv2.getTrackbarPos('save','save data')
+			#print get_save
+			get_color = cv2.getTrackbarPos('r2r3gby','save data')
+			
+			if get_save == 1:
+				# Getting thresholds from file
+				try:
+					file = open(default.file_name, 'r')
+					colour = default.colors_used[get_color]
+					print colour
+					write_new_vals(colour,hmin,smin,vmin,hmax,smax,
+					vmax,file)
+					#time.sleep(500)
+					print 'time elapsed'
+					# Resetting
+					cv2.createTrackbar('save','save data',0,1,nothing)
+				except IOError, ErrorValue:
+					print 'File not found or corrupted. Please, \
+					place a working file in project folder.'
+				
 	# Releasing capture
 	cap.release()
 	cv2.destroyAllWindows()
