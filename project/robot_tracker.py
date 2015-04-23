@@ -1144,7 +1144,7 @@ def read_line(lines2, y2,thres):
 	return thres
 	
 def read_file(file1):
-	color_thres = ['red2\n','red3\n','green\n','blue\n','yellow\n']
+	color_thres = default.colors_used
 	with file1 as f:
 		lines = f.readlines()
 
