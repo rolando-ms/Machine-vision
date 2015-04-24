@@ -411,6 +411,114 @@ opening_red, opening_green, opening_blue):
 	limits = 0
 	
 	# Getting color data
+	rel_minix, rel_miniy, rel_maxix, rel_maxiy = 0, 0, 0, 0
+	for y in range(height):
+		row = opening_red[:,y]
+		#print row
+		max_row = max(row)
+		if max_row > 0:
+			if rel_maxiy == 0 and rel_miniy == 0:
+				#rel_maxix, rel_minix = x, x
+				rel_maxiy, rel_miniy = y, y
+			else:
+				if y > rel_maxiy:
+					rel_maxiy = y
+					
+	for x in range(width):
+		col = opening_red[x,:]
+		max_col = max(col)
+		if max_col > 0:
+			if rel_maxix == 0 and rel_minix == 0:
+				rel_maxix, rel_minix = x, x
+				#rel_maxiy, rel_miniy = y, y
+			else:
+				if x > rel_maxix:
+					rel_maxix = x
+	#print rel_minix, rel_miniy, rel_maxix, rel_maxiy
+	
+	for y in range(rel_miniy, rel_maxiy):
+		for x in range(rel_minix, rel_maxix):
+			
+			if opening_red[x,y] > 0 and red_labels[x,y] == 0:
+				red_labels, red_counter, pixels, cumulatives, limits = DFS2(opening_red, 
+				red_labels, x, y, red_counter)
+			
+				red_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+				limits[0], limits[1], limits[2], limits[3]])
+				#print 'red', red_colors
+				
+	rel_minix, rel_miniy, rel_maxix, rel_maxiy = 0, 0, 0, 0
+	for y in range(height):
+		row = opening_green[:,y]
+		#print row
+		max_row = max(row)
+		if max_row > 0:
+			if rel_maxiy == 0 and rel_miniy == 0:
+				#rel_maxix, rel_minix = x, x
+				rel_maxiy, rel_miniy = y, y
+			else:
+				if y > rel_maxiy:
+					rel_maxiy = y
+					
+	for x in range(width):
+		col = opening_green[x,:]
+		max_col = max(col)
+		if max_col > 0:
+			if rel_maxix == 0 and rel_minix == 0:
+				rel_maxix, rel_minix = x, x
+				#rel_maxiy, rel_miniy = y, y
+			else:
+				if x > rel_maxix:
+					rel_maxix = x
+	#print rel_minix, rel_miniy, rel_maxix, rel_maxiy
+	
+	for y in range(rel_miniy, rel_maxiy):
+		for x in range(rel_minix, rel_maxix):
+		
+			if opening_green[x,y] > 0 and green_labels[x,y] == 0:
+				green_labels, green_counter, pixels, cumulatives, limits = DFS2(opening_green, 
+				green_labels, x, y, green_counter)
+			
+				green_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+				limits[0], limits[1], limits[2], limits[3]])
+				#print 'green', green_colors
+				
+	rel_minix, rel_miniy, rel_maxix, rel_maxiy = 0, 0, 0, 0
+	for y in range(height):
+		row = opening_blue[:,y]
+		#print row
+		max_row = max(row)
+		if max_row > 0:
+			if rel_maxiy == 0 and rel_miniy == 0:
+				#rel_maxix, rel_minix = x, x
+				rel_maxiy, rel_miniy = y, y
+			else:
+				if y > rel_maxiy:
+					rel_maxiy = y
+					
+	for x in range(width):
+		col = opening_blue[x,:]
+		max_col = max(col)
+		if max_col > 0:
+			if rel_maxix == 0 and rel_minix == 0:
+				rel_maxix, rel_minix = x, x
+				#rel_maxiy, rel_miniy = y, y
+			else:
+				if x > rel_maxix:
+					rel_maxix = x
+	#print rel_minix, rel_miniy, rel_maxix, rel_maxiy
+	
+	for y in range(rel_miniy, rel_maxiy):
+		for x in range(rel_minix, rel_maxix):
+	
+			if opening_blue[x,y] > 0 and blue_labels[x,y] == 0:
+				blue_labels, blue_counter, pixels, cumulatives, limits = DFS2(opening_blue, 
+				blue_labels, x, y, blue_counter)
+			
+				blue_colors.append([pixels, cumulatives[0]/pixels, cumulatives[1]/pixels,
+				limits[0], limits[1], limits[2], limits[3]])
+				#print 'blue', blue_colors
+	'''
 	for y in range(rel_miniy, rel_maxiy):
 		for x in range(rel_minix, rel_maxix):
 			# Getting data with DFS2 and appending to auxiliary list
@@ -440,7 +548,7 @@ opening_red, opening_green, opening_blue):
 				blue_colors.append([pixels, cumulatives[0]/pixels, \
 				cumulatives[1]/pixels, limits[0], limits[1], limits[2],\
 				limits[3]])
-	
+	'''
 	# Popping small or large undesirable objects on each color structure
 	# and keeping the biggest one of the remainders
 	# Red
