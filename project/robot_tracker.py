@@ -146,7 +146,7 @@ def print_box(image, data, box_color):
 			for y in range(data._minx, data._maxx):
 				image[y,data._maxy] = box_color#(0,255,0)
 	return image
-
+'''
 # This module applies the DFS algorithm to gather all the pixels of an 
 # image. It makes the corresponding labelling
 def DFS(image, labels2, x2, y2, count):
@@ -198,7 +198,7 @@ def DFS(image, labels2, x2, y2, count):
 		remaining = 0 # Resetting remaining variable
 
 	return labels2, count
-
+'''
 # This module is an extension of the previous DFS module. It also takes
 # the number of pixels of a detected object, the cumulative coordinate
 # values for the center of mass and the min. and max. coordinate values.
@@ -617,7 +617,7 @@ opening_red, opening_green, opening_blue):
 # This module applies DFS to count the supposedly 3 detected yellow
 # objects.	
 def yellow_det_count(yellow_colours, rel_minix, rel_miniy, rel_maxix, \
-rel_maxiy, opening_yellow):
+rel_maxiy, opening_yellow,colours):
 	
 	width, height = opening_yellow.shape
 	yellow_counter = 0
@@ -628,7 +628,55 @@ rel_maxiy, opening_yellow):
 	minx_1, miny_1, maxx_1, maxy_1 = 0, 0, 0, 0
 	minx_2, miny_2, maxx_2, maxy_2 = 0, 0, 0, 0
 	minx_3, miny_3, maxx_3, maxy_3 = 0, 0, 0, 0
-
+	data = [[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+	#vals = [0,0,0,0,0,0,0]
+	#for a in range(len(colours)):
+	#	data.append(vals)
+		
+	for a in range(len(colours)):
+		#print data[a]
+		difx = colours[a]._maxx - colours[a]._minx
+		dify = colours[a]._maxy - colours[a]._miny
+		center = colours[a]._center_mass
+		#print center
+		offset = 0.1
+		rel_miniy = int(center[1] - ((1.5 + offset) * dify))
+		rel_maxiy = int(center[1] + ((1.5 + offset) * dify))
+		rel_minix = int(center[0] - ((1.5 + offset) * difx))
+		rel_maxix = int(center[0] + ((1.5 + offset) * difx))
+		
+		for y in range(rel_miniy, rel_maxiy):
+			for x in range(rel_minix, rel_maxix):
+				if opening_yellow[x,y] > 0:
+					data[a][0] += 1	# Num. of pixels
+					#print 'inside'
+					data[a][1] += x	# Cumulative x
+					data[a][2] += y	# Cumulative y
+					
+					if data[a][3] == 0 and data[a][5] == 0 and \
+						data[a][4] == 0 and data[a][6] == 0:
+						data[a][3], data[a][4] = x, x
+						data[a][5], data[a][6] = y, y
+					else:
+						if x < data[a][3]:		# min x
+							data[a][3] = x
+						elif x > data[a][4]:	# max x
+							data[a][4] = x
+						if y < data[a][5]:		# min y
+							data[a][5] = y
+						elif y > data[a][6]:	# max y 
+							data[a][6] = y
+	#print data
+	#print data[0]
+	pixels_1, cumulative_x_1, cumulative_y_1, minx_1, maxx_1, \
+	miny_1, maxy_1 = data[0][:]
+	#print data[1]
+	pixels_2, cumulative_x_2, cumulative_y_2, minx_2, maxx_2, \
+	miny_2, maxy_2 = data[1][:]
+	#print data[2]
+	pixels_3, cumulative_x_3, cumulative_y_3, minx_3, maxx_3, \
+	miny_3, maxy_3 = data[2][:]
+	'''
 	# Applying DFS
 	for y in range(rel_miniy, rel_maxiy):
 		for x in range(rel_minix, rel_maxix):
@@ -699,7 +747,7 @@ rel_maxiy, opening_yellow):
 						miny_3 = y
 					elif y > maxy_3:
 						maxy_3 = y
-	
+	'''
 	# Assigning data to structure
 	# Yellow 1
 	yellow_colours[0] = assignment(yellow_colours[0], minx_1, miny_1, maxx_1, 
@@ -804,6 +852,7 @@ def robot_detection():
 		print 'File not found or corrupted. Using defaults.'
 		thr = default.def_vals
 	
+	timez = 0
 	# Starting time counter to measure elapsed time
 	e1 = cv2.getTickCount()
 	
@@ -982,7 +1031,7 @@ def robot_detection():
 			(rel_maxx - rel_minx) < width / 4:
 				
 				yellow_colors = yellow_det_count(yellow_colors, rel_minx, rel_miny, \
-				rel_maxx, rel_maxy, yellow_opening)
+				rel_maxx, rel_maxy, yellow_opening, colors)
 				
 			else:
 			
@@ -1067,8 +1116,8 @@ def robot_detection():
 			e2 = cv2.getTickCount() # Getting time after processing
 			# Calculating elapsed time
 			time = (e2 - e1) / cv2.getTickFrequency()
-			print time
-			
+			print time - timez
+			timez = time
 			# Showing result image
 			cv2.imshow('center of mass',img2)
 			#cv2.waitKey(0)
