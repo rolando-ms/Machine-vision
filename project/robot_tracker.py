@@ -640,32 +640,36 @@ rel_maxiy, opening_yellow,colours):
 		center = colours[a]._center_mass
 		#print center
 		offset = 0.1
-		rel_miniy = int(center[1] - ((1.5 + offset) * dify))
-		rel_maxiy = int(center[1] + ((1.5 + offset) * dify))
-		rel_minix = int(center[0] - ((1.5 + offset) * difx))
-		rel_maxix = int(center[0] + ((1.5 + offset) * difx))
+		multiplier = 1.5
+		rel_miniy = int(center[1] - ((multiplier + offset) * dify))
+		rel_maxiy = int(center[1] + ((multiplier + offset) * dify))
+		rel_minix = int(center[0] - ((multiplier + offset) * difx))
+		rel_maxix = int(center[0] + ((multiplier + offset) * difx))
 		
-		for y in range(rel_miniy, rel_maxiy):
-			for x in range(rel_minix, rel_maxix):
-				if opening_yellow[x,y] > 0:
-					data[a][0] += 1	# Num. of pixels
-					#print 'inside'
-					data[a][1] += x	# Cumulative x
-					data[a][2] += y	# Cumulative y
-					
-					if data[a][3] == 0 and data[a][5] == 0 and \
-						data[a][4] == 0 and data[a][6] == 0:
-						data[a][3], data[a][4] = x, x
-						data[a][5], data[a][6] = y, y
-					else:
-						if x < data[a][3]:		# min x
-							data[a][3] = x
-						elif x > data[a][4]:	# max x
-							data[a][4] = x
-						if y < data[a][5]:		# min y
-							data[a][5] = y
-						elif y > data[a][6]:	# max y 
-							data[a][6] = y
+		try:
+			for y in range(rel_miniy, rel_maxiy):
+				for x in range(rel_minix, rel_maxix):
+					if opening_yellow[x,y] > 0:
+						data[a][0] += 1	# Num. of pixels
+						#print 'inside'
+						data[a][1] += x	# Cumulative x
+						data[a][2] += y	# Cumulative y
+						
+						if data[a][3] == 0 and data[a][5] == 0 and \
+							data[a][4] == 0 and data[a][6] == 0:
+							data[a][3], data[a][4] = x, x
+							data[a][5], data[a][6] = y, y
+						else:
+							if x < data[a][3]:		# min x
+								data[a][3] = x
+							elif x > data[a][4]:	# max x
+								data[a][4] = x
+							if y < data[a][5]:		# min y
+								data[a][5] = y
+							elif y > data[a][6]:	# max y 
+								data[a][6] = y
+		except IndexError:
+			data[a] = [0,0,0,0,0,0,0]
 	#print data
 	#print data[0]
 	pixels_1, cumulative_x_1, cumulative_y_1, minx_1, maxx_1, \
@@ -1035,8 +1039,10 @@ def robot_detection():
 				
 			else:
 			
-				yellow_colors = yellow_det_dfs(yellow_colors, rel_minx, rel_miny, \
-				rel_maxx, rel_maxy, yellow_opening)
+				#yellow_colors = yellow_det_dfs(yellow_colors, rel_minx, rel_miny, \
+				#rel_maxx, rel_maxy, yellow_opening)
+				yellow_colors = yellow_det_count(yellow_colors, rel_minx, rel_miny, \
+				rel_maxx, rel_maxy, yellow_opening, colors)
 			
 			# Showing centers of mass on a new image and bounding boxes
 			#img2 = cv2.imread('equ_3.png')
