@@ -1109,15 +1109,25 @@ def robot_detection():
 						else:
 							cv2.putText(img2,'Color not detected',(0,20),font,0.5,
 							(255,255,255),1)
-					
-			'''
-			# Printing center of mass
+			
+			# Printing boundaries by getting biggest area
+			#areas = []
+			#area = 0
+			h, w, max_area, indx, area= 0, 0, 0, 0, 0
 			for x in range(len(colors)):
-				print colors[x]._orientation
-				c = colors[x]._correspondence
-				#print c
-				print colors[x]._center_mass, yellow_colors[c]._center_mass
-			'''
+				h = colors[x]._maxy - colors[x]._miny
+				w = colors[x]._maxx - colors[x]._minx
+				#areas.append(h*w)
+				area = h * w
+				if area > max_area:
+					indx = x
+			#miny, maxy, minx, maxx = 0,0,0,0
+			miny = 0 + (colors[indx]._maxy - colors[indx]._miny)
+			minx = 0 + (colors[indx]._maxx - colors[indx]._minx)
+			maxy = height - (colors[indx]._maxy - colors[indx]._miny)
+			maxx = width - (colors[indx]._maxx - colors[indx]._minx)
+			
+			cv2.rectangle(img2,(minx,miny),(maxy,maxx),(0,0,255),1)
 			
 			e2 = cv2.getTickCount() # Getting time after processing
 			# Calculating elapsed time
