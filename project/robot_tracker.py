@@ -1357,7 +1357,8 @@ def read_thres(file1):
 					break
 
 	return thresholds
-	
+
+# This Module reads the units used in pixels/cm from a text file
 def read_units(file1):
 	
 	with file1 as f:
@@ -1371,6 +1372,23 @@ def read_units(file1):
 			break
 		
 	return unit_val
+
+# This Module reads the units used in pixels/cm from a text file
+def write_units(file1,unit_val):
+	
+	with file1 as f:
+		lines = f.readlines()
+
+	unit = 'units\n'
+
+	for x in range(len(lines)):
+		if lines[x] == unit:
+			lines[x+1] = str(unit_val) + '\n'
+			break
+	
+	file1 = open(default.file_name, 'w')
+	with file1 as f:
+		f.writelines(lines)
 	
 # This module shows the binary images with the current thresholds	
 def show_hsv_binary():
