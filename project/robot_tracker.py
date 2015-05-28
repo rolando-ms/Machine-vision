@@ -1358,6 +1358,20 @@ def read_thres(file1):
 
 	return thresholds
 	
+def read_units(file1):
+	
+	with file1 as f:
+		lines = f.readlines()
+
+	unit = 'units\n'
+
+	for x in range(len(lines)):
+		if lines[x] == unit:
+			unit_val = int(lines[x+1])
+			break
+		
+	return unit_val
+	
 # This module shows the binary images with the current thresholds	
 def show_hsv_binary():
 	# Choosing camera
@@ -1367,6 +1381,9 @@ def show_hsv_binary():
 	try:
 		file = open(default.file_name, 'r')
 		thr = read_thres(file)
+		#file = open(default.file_name, 'r') # Reopen file
+		#value_units = read_units(file)
+		print value_units
 	except IOError, ErrorValue:
 		print 'File not found or corrupted. Using defaults.'
 		thr = default.def_vals
