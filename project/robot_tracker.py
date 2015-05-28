@@ -36,6 +36,7 @@ from nxt.motor import *		# Tests with NXT
 from Tkinter import *		# To make the GUI
 from nxt.motor import Motor, PORT_B, PORT_C	# Distance tests with NXT
 from nxt.sensor import Ultrasonic, PORT_4	# Distance tests with NXT
+import serial
 #import time
 
 # This class includes all the needed data of a detected object.
@@ -68,6 +69,8 @@ class default:
 	file_name = 'test.txt'
 	
 	colors_used = ['red2\n','red3\n','green\n','blue\n','yellow\n']
+	
+	cam_num = 0
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -848,10 +851,13 @@ def robot_detection():
 	#brick = nxt.locator.find_one_brick(name = 'NXT1')
 	#robot = Robot(brick)
 	
+	# Bluetooth connection with arduino
+	ser = serial.Serial(12, 9600, timeout = 1)
+	
 	# Getting thresholds from file
 	try:
 		file = open(default.file_name, 'r')
-		thr = read_file(file)
+		thr = read_thres(file)
 	except IOError, ErrorValue:
 		print 'File not found or corrupted. Using defaults.'
 		thr = default.def_vals
@@ -861,7 +867,7 @@ def robot_detection():
 	e1 = cv2.getTickCount()
 	
 	# Choosing camera to work with
-	cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(default.cam_num)
 	
 	while(True):
 		# Reading capture from chosen camera
@@ -1104,12 +1110,21 @@ def robot_detection():
 						(a, b) = colors[z]._center_mass
 						# Printing angle as a string on image
 						if distances[z] <= 50:
-							cv2.putText(img2,str(int(angle_deg)),(a,b),font,0.75,
+							cv2.putText(img2,str(int(angle_deg)),(b,a),font,0.75,
 							(255,255,255),1)
 						else:
 							cv2.putText(img2,'Color not detected',(0,20),font,0.5,
 							(255,255,255),1)
 			
+			row = 35
+			farben = ['R = ', 'G = ', 'B = ']
+			# Printing positions (in pixels) on image (row, column)
+			for x in range(len(colors)):
+				cv2.putText(img2,farben[x] + str(colors[x]._center_mass),(15,row),font,0.75,
+								(255,255,255),1)
+				row += 20
+				
+				
 			# Printing boundaries by getting biggest area
 			#areas = []
 			#area = 0
@@ -1141,6 +1156,7 @@ def robot_detection():
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 			
+			ser.write(str(colors[1]._orientation)+'\n')
 			'''
 			# Moving robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
@@ -1150,14 +1166,15 @@ def robot_detection():
 				m_right = Motor(brick, PORT_B)
 				m_right.turn(-100, 90)
 			'''
-			
+	
+	ser.close()	# Closing serial communication
 	cap.release() # Releasing capture
 	cv2.destroyAllWindows()
 
 # This module only shows the real time captures of the camera
 def show_cam():
 	# Selecting camera
-	cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(default.cam_num)
 
 	while(True):
 		# Capture frame
@@ -1226,7 +1243,7 @@ def thres_adj():
 	cv2.createTrackbar('r2r3gby','save data',0,4,nothing)
 
 	# Choosing camera
-	cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(default.cam_num)
 
 	while(True):
 		ret, img = cap.read()
@@ -1276,11 +1293,11 @@ def thres_adj():
 				try:
 					file = open(default.file_name, 'r')
 					colour = default.colors_used[get_color]
-					print colour
+					#print colour
 					write_new_vals(colour,hmin,smin,vmin,hmax,smax,
 					vmax,file)
 					#time.sleep(500)
-					print 'time elapsed'
+					#print 'time elapsed'
 					# Resetting
 					cv2.createTrackbar('save','save data',0,1,nothing)
 				except IOError, ErrorValue:
@@ -1291,7 +1308,8 @@ def thres_adj():
 	cap.release()
 	cv2.destroyAllWindows()
 
-def read_line(lines2, y2,thres):
+# This module reads a line from a target file
+def read_line_thres(lines2, y2,thres):
 	h, s, v = '', '', ''
 	for a in range(2,len(lines2[y2+2])):
 		if lines2[y2+2][a] == '\n':
@@ -1315,8 +1333,9 @@ def read_line(lines2, y2,thres):
 	thres.append(int(v))
 	
 	return thres
-	
-def read_file(file1):
+
+# This module reads a target file in the same project folder	
+def read_thres(file1):
 	color_thres = default.colors_used
 	with file1 as f:
 		lines = f.readlines()
@@ -1331,10 +1350,10 @@ def read_file(file1):
 			if lines[y] == color_thres[x]:
 				if lines[y+1] == low and lines[y] == color_thres[x]:
 
-					thresholds = read_line(lines, y, thresholds)
+					thresholds = read_line_thres(lines, y, thresholds)
 
 				if lines[y+1] == up and lines[y] == color_thres[x]:
-					thresholds = read_line(lines, y, thresholds)
+					thresholds = read_line_thres(lines, y, thresholds)
 					break
 
 	return thresholds
@@ -1342,12 +1361,12 @@ def read_file(file1):
 # This module shows the binary images with the current thresholds	
 def show_hsv_binary():
 	# Choosing camera
-	cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(default.cam_num)
 
 	# Getting thresholds from file
 	try:
 		file = open(default.file_name, 'r')
-		thr = read_file(file)
+		thr = read_thres(file)
 	except IOError, ErrorValue:
 		print 'File not found or corrupted. Using defaults.'
 		thr = default.def_vals
@@ -1408,25 +1427,194 @@ def show_hsv_binary():
 	# Releasing the capture
 	cap.release()
 	cv2.destroyAllWindows()
+
+def write_units(file1,diff):
+	with file1 as f:
+		lines = f.readlines()
+		
+	for x in range(len(lines)):
+		if lines[x] == 'units\n':
+			#lines[x+1] = val
+			lines[x+2] = str(diff)+'\n'
+			break
+			
+	file1 = open(default.file_name, 'w')
+	with file1 as f:
+		f.writelines(lines)
+	
+def units_selection():
+	
+	def callback(known_dist):
+		#print e.get()
+		#val = e.get()
+		# Getting thresholds from file
+		try:
+			file = open(default.file_name, 'r')
+			write_units(file,known_dist)
+		except IOError, ErrorValue:
+			print 'File not found or corrupted. Using defaults.'
+		
+	
+	units = Tk()
+	#e = Entry(units)
+	#e.pack()
+	#e.focus_set()
+
+	# Creating window
+	cv2.namedWindow('sliders')
+
+	# create trackbars for color change
+	cv2.createTrackbar('Hmin','sliders',0,179,nothing)
+	cv2.createTrackbar('Smin','sliders',0,255,nothing)
+	cv2.createTrackbar('Vmin','sliders',0,255,nothing)
+
+	cv2.createTrackbar('Hmax','sliders',179,179,nothing)
+	cv2.createTrackbar('Smax','sliders',255,255,nothing)
+	cv2.createTrackbar('Vmax','sliders',255,255,nothing)
+	'''
+	# Creating window
+	cv2.namedWindow('save units')
+	#saving = '0 : Nothing \n1 : Save'
+	cv2.createTrackbar('save','save units',0,1,nothing)
+	#colors_used = '0 : red2 \n1 : red3 \n2 : green \n3 : blue \n4 : yellow '
+	cv2.createTrackbar('r2r3gby','save units',0,4,nothing)
+	'''
+	# Choosing camera
+	cap = cv2.VideoCapture(default.cam_num)
+
+	while(True):
+		ret, img = cap.read()
+		# If there is a capture
+		if(ret):
+			# RGB to HSV transformation
+			hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+			
+			# Get current positions of four trackbars
+			hmin = cv2.getTrackbarPos('Hmin','sliders')
+			smin = cv2.getTrackbarPos('Smin','sliders')
+			vmin = cv2.getTrackbarPos('Vmin','sliders')
+			hmax = cv2.getTrackbarPos('Hmax','sliders')
+			smax = cv2.getTrackbarPos('Smax','sliders')
+			vmax = cv2.getTrackbarPos('Vmax','sliders')
+			
+			# Low and up thresholds. Values from trackbars
+			low = np.array([hmin, smin, vmin])
+			up = np.array([hmax, smax, vmax])
+
+			# Thresholding the HSV image
+			mask = cv2.inRange(hsv, low, up)
+
+			# Showing binary image
+			cv2.imshow('mask',mask)
+			# Press "q" to exit
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+			
+			# Applying opening operation
+			kernel = np.ones((5,5),np.uint8) # Square kernel matrix
+			#erode_img = cv2.erode(mask,kernel,iterations=2)
+			opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+			cv2.imshow('open',opening)
+			# Press "q" to exit
+			if cv2.waitKey(1) & 0xFF == ord('q'):
+				break
+			
+			
+			'''
+			# Getting trackbar positions to choose whether to save
+			# or not
+			get_save = cv2.getTrackbarPos('save','save units')
+			#print get_save
+			get_color = cv2.getTrackbarPos('r2r3gby','save units')
+			
+			if get_save == 1:
+				# Getting thresholds from file
+				try:
+					file = open(default.file_name, 'r')
+					colour = default.colors_used[get_color]
+					#print colour
+					write_new_vals(colour,hmin,smin,vmin,hmax,smax,
+					vmax,file)
+					#time.sleep(500)
+					#print 'time elapsed'
+					# Resetting
+					cv2.createTrackbar('save','save units',0,1,nothing)
+				except IOError, ErrorValue:
+					print 'File not found or corrupted. Please, \
+					place a working file in project folder.'
+			'''
+	# Getting max and min relative values for further 
+	# image processing. Instead of scanning the whole image,
+	# it'll only scan the area of interest.
+	width, height = opening.shape
+	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
+	for y in range(height):
+		row = opening[:,y]
+		#print row
+		max_row = max(row)
+		if max_row > 0:
+			if rel_maxy == 0 and rel_miny == 0:
+				#rel_maxx, rel_minx = x, x
+				rel_maxy, rel_miny = y, y
+			else:
+				if y > rel_maxy:
+					rel_maxy = y
+					
+	for x in range(width):
+		col = opening[x,:]
+		max_col = max(col)
+		if max_col > 0:
+			if rel_maxx == 0 and rel_minx == 0:
+				rel_maxx, rel_minx = x, x
+				#rel_maxy, rel_miny = y, y
+			else:
+				if x > rel_maxx:
+					rel_maxx = x
+	
+	diffx = rel_maxx - rel_minx
+	diffy = rel_maxy - rel_miny
+	known_dist = 0
+	
+	if diffx > diffy:
+		known_dist = diffx
+	else:
+		known_dist = diffy
+	
+	b = Button(units, text="get value", width=10, command=callback(known_dist))
+	b.pack()	
+	
+	mainloop()
+	#e = Entry(units, width=50)
+	#e.pack()
+
+	# Releasing capture
+	cap.release()
+	cv2.destroyAllWindows()
 	
 # Main function
 if __name__ == "__main__":
 	
 	master = Tk() # Creating master control
 	
+	# It seems that tkinter supports only gif images
+	icon=PhotoImage(file="qr.gif")
+	
 	# Creating buttons of master control to call the corresponding
 	# functions.
-	button_det = Button(master, text="Start robot detection", command=robot_detection)
+	button_det = Button(master, compound = LEFT, image=icon, text="Start robot detection",command=robot_detection)
 	button_det.pack()
 	
-	button_show = Button(master, text="Show camera image", command=show_cam)
+	button_show = Button(master, text="Show camera image",  height=3, width=50 ,command=show_cam)
 	button_show.pack()
 	
-	button_thres = Button(master, text="Threshold adjustment", command=thres_adj)
+	button_thres = Button(master, text="Threshold adjustment",  height=3, width=50 ,command=thres_adj)
 	button_thres.pack()
 	
-	button_hsv = Button(master, text="Show hsv binary images", command=show_hsv_binary)
+	button_hsv = Button(master, text="Show hsv binary images",  height=3, width=50 ,command=show_hsv_binary)
 	button_hsv.pack()
+	
+	button_units = Button(master, text="Units adjustment",  height=3, width=50 ,command=units_selection)
+	button_units.pack()
 	
 	#button_quit = Button(master, text="QUIT", command=)
 	#button_thres.pack()
