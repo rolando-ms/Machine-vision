@@ -37,7 +37,8 @@ from Tkinter import *		# To make the GUI
 from nxt.motor import Motor, PORT_B, PORT_C	# Distance tests with NXT
 from nxt.sensor import Ultrasonic, PORT_4	# Distance tests with NXT
 import serial
-#import time
+from threading import Thread
+import time
 
 # This class includes all the needed data of a detected object.
 class circle_data:
@@ -1241,6 +1242,8 @@ def thres_adj():
 	cv2.createTrackbar('save','save data',0,1,nothing)
 	#colors_used = '0 : red2 \n1 : red3 \n2 : green \n3 : blue \n4 : yellow '
 	cv2.createTrackbar('r2r3gby','save data',0,4,nothing)
+	#Save diameter in pixels
+	cv2.createTrackbar('save diam.','save data',0,1,nothing)
 
 	# Choosing camera
 	cap = cv2.VideoCapture(default.cam_num)
@@ -1287,6 +1290,8 @@ def thres_adj():
 			get_save = cv2.getTrackbarPos('save','save data')
 			#print get_save
 			get_color = cv2.getTrackbarPos('r2r3gby','save data')
+			# Choose whether to save the diameter in pixels or not
+			get_diam = cv2.getTrackbarPos('save diam.','save data')
 			
 			if get_save == 1:
 				# Getting thresholds from file
@@ -1300,6 +1305,47 @@ def thres_adj():
 					#print 'time elapsed'
 					# Resetting
 					cv2.createTrackbar('save','save data',0,1,nothing)
+				except IOError, ErrorValue:
+					print 'File not found or corrupted. Please, \
+					place a working file in project folder.'
+					
+			if get_diam == 1:
+				# 
+				try:
+					file = open(default.file_name, 'r')
+					width, height = opening.shape
+					rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
+					for y in range(height):
+						row = opening[:,y]
+						#print row
+						max_row = max(row)
+						if max_row > 0:
+							if rel_maxy == 0 and rel_miny == 0:
+								#rel_maxx, rel_minx = x, x
+								rel_maxy, rel_miny = y, y
+							else:
+								if y > rel_maxy:
+									rel_maxy = y
+					
+					# diameter in pixels
+					diam_pix = rel_maxy - rel_miny
+					# Writing data to text file
+					write_units(file,diam_pix,1)
+					print 'Diameter data overwritten.'
+					'''
+					for x in range(width):
+						col = opening[x,:]
+						max_col = max(col)
+						if max_col > 0:
+							if rel_maxx == 0 and rel_minx == 0:
+								rel_maxx, rel_minx = x, x
+								#rel_maxy, rel_miny = y, y
+							else:
+								if x > rel_maxx:
+									rel_maxx = x
+					'''
+					# Resetting
+					cv2.createTrackbar('save diam.','save data',0,1,nothing)
 				except IOError, ErrorValue:
 					print 'File not found or corrupted. Please, \
 					place a working file in project folder.'
@@ -1357,38 +1403,6 @@ def read_thres(file1):
 					break
 
 	return thresholds
-
-# This Module reads the units used in pixels/cm from a text file
-def read_units(file1):
-	
-	with file1 as f:
-		lines = f.readlines()
-
-	unit = 'units\n'
-
-	for x in range(len(lines)):
-		if lines[x] == unit:
-			unit_val = int(lines[x+1])
-			break
-		
-	return unit_val
-
-# This Module reads the units used in pixels/cm from a text file
-def write_units(file1,unit_val):
-	
-	with file1 as f:
-		lines = f.readlines()
-
-	unit = 'units\n'
-
-	for x in range(len(lines)):
-		if lines[x] == unit:
-			lines[x+1] = str(unit_val) + '\n'
-			break
-	
-	file1 = open(default.file_name, 'w')
-	with file1 as f:
-		f.writelines(lines)
 	
 # This module shows the binary images with the current thresholds	
 def show_hsv_binary():
@@ -1401,7 +1415,7 @@ def show_hsv_binary():
 		thr = read_thres(file)
 		#file = open(default.file_name, 'r') # Reopen file
 		#value_units = read_units(file)
-		print value_units
+		#print value_units
 	except IOError, ErrorValue:
 		print 'File not found or corrupted. Using defaults.'
 		thr = default.def_vals
@@ -1463,168 +1477,68 @@ def show_hsv_binary():
 	cap.release()
 	cv2.destroyAllWindows()
 
-def write_units(file1,diff):
+# This Module reads the units used in pixels/cm from a text file
+def read_units(file1,num):
+	
 	with file1 as f:
 		lines = f.readlines()
-		
+
+	unit = 'units\n'
+
 	for x in range(len(lines)):
-		if lines[x] == 'units\n':
-			#lines[x+1] = val
-			lines[x+2] = str(diff)+'\n'
+		if lines[x] == unit:
+			unit_val = int(lines[x+num])
 			break
-			
+		
+	return unit_val
+
+# This Module writes the units to a text file
+def write_units(file1,unit_val,num):
+	
+	with file1 as f:
+		lines = f.readlines()
+
+	unit = 'units\n'
+
+	for x in range(len(lines)):
+		if lines[x] == unit:
+			lines[x+num] = str(unit_val) + '\n'
+			break
+	
 	file1 = open(default.file_name, 'w')
 	with file1 as f:
 		f.writelines(lines)
-	
+	#print 'Data overwritten.'
+
+# Module to save the diameter of a detected	circle
 def units_selection():
-	
-	def callback(known_dist):
-		#print e.get()
-		#val = e.get()
-		# Getting thresholds from file
+	# Thread to show thres_adj module simultaneously
+	t2 = Thread(target=thres_adj)
+	t2.start()
+	def callback():
+		val = e.get()
+		# Saving size in cms entered by the user
 		try:
+			# Size in cms
 			file = open(default.file_name, 'r')
-			write_units(file,known_dist)
+			write_units(file,val,2)
+			print 'Size in centimeters overwritten.'
+			# Updating pixels/cm
+			file = open(default.file_name, 'r')
+			pix = read_units(file,1)
+			pix_cm = pix/float(val)
+			file = open(default.file_name, 'r')
+			write_units(file,pix_cm,3)
+			print 'Value of pixles/cm updated.'
 		except IOError, ErrorValue:
-			print 'File not found or corrupted. Using defaults.'
+			print 'File not found or corrupted. Couldn\'t overwrite data.'
 		
-	
 	units = Tk()
-	#e = Entry(units)
-	#e.pack()
-	#e.focus_set()
-
-	# Creating window
-	cv2.namedWindow('sliders')
-
-	# create trackbars for color change
-	cv2.createTrackbar('Hmin','sliders',0,179,nothing)
-	cv2.createTrackbar('Smin','sliders',0,255,nothing)
-	cv2.createTrackbar('Vmin','sliders',0,255,nothing)
-
-	cv2.createTrackbar('Hmax','sliders',179,179,nothing)
-	cv2.createTrackbar('Smax','sliders',255,255,nothing)
-	cv2.createTrackbar('Vmax','sliders',255,255,nothing)
-	'''
-	# Creating window
-	cv2.namedWindow('save units')
-	#saving = '0 : Nothing \n1 : Save'
-	cv2.createTrackbar('save','save units',0,1,nothing)
-	#colors_used = '0 : red2 \n1 : red3 \n2 : green \n3 : blue \n4 : yellow '
-	cv2.createTrackbar('r2r3gby','save units',0,4,nothing)
-	'''
-	# Choosing camera
-	cap = cv2.VideoCapture(default.cam_num)
-
-	while(True):
-		ret, img = cap.read()
-		# If there is a capture
-		if(ret):
-			# RGB to HSV transformation
-			hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-			
-			# Get current positions of four trackbars
-			hmin = cv2.getTrackbarPos('Hmin','sliders')
-			smin = cv2.getTrackbarPos('Smin','sliders')
-			vmin = cv2.getTrackbarPos('Vmin','sliders')
-			hmax = cv2.getTrackbarPos('Hmax','sliders')
-			smax = cv2.getTrackbarPos('Smax','sliders')
-			vmax = cv2.getTrackbarPos('Vmax','sliders')
-			
-			# Low and up thresholds. Values from trackbars
-			low = np.array([hmin, smin, vmin])
-			up = np.array([hmax, smax, vmax])
-
-			# Thresholding the HSV image
-			mask = cv2.inRange(hsv, low, up)
-
-			# Showing binary image
-			cv2.imshow('mask',mask)
-			# Press "q" to exit
-			if cv2.waitKey(1) & 0xFF == ord('q'):
-				break
-			
-			# Applying opening operation
-			kernel = np.ones((5,5),np.uint8) # Square kernel matrix
-			#erode_img = cv2.erode(mask,kernel,iterations=2)
-			opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-			cv2.imshow('open',opening)
-			# Press "q" to exit
-			if cv2.waitKey(1) & 0xFF == ord('q'):
-				break
-			
-			
-			'''
-			# Getting trackbar positions to choose whether to save
-			# or not
-			get_save = cv2.getTrackbarPos('save','save units')
-			#print get_save
-			get_color = cv2.getTrackbarPos('r2r3gby','save units')
-			
-			if get_save == 1:
-				# Getting thresholds from file
-				try:
-					file = open(default.file_name, 'r')
-					colour = default.colors_used[get_color]
-					#print colour
-					write_new_vals(colour,hmin,smin,vmin,hmax,smax,
-					vmax,file)
-					#time.sleep(500)
-					#print 'time elapsed'
-					# Resetting
-					cv2.createTrackbar('save','save units',0,1,nothing)
-				except IOError, ErrorValue:
-					print 'File not found or corrupted. Please, \
-					place a working file in project folder.'
-			'''
-	# Getting max and min relative values for further 
-	# image processing. Instead of scanning the whole image,
-	# it'll only scan the area of interest.
-	width, height = opening.shape
-	rel_minx, rel_miny, rel_maxx, rel_maxy = 0, 0, 0, 0
-	for y in range(height):
-		row = opening[:,y]
-		#print row
-		max_row = max(row)
-		if max_row > 0:
-			if rel_maxy == 0 and rel_miny == 0:
-				#rel_maxx, rel_minx = x, x
-				rel_maxy, rel_miny = y, y
-			else:
-				if y > rel_maxy:
-					rel_maxy = y
-					
-	for x in range(width):
-		col = opening[x,:]
-		max_col = max(col)
-		if max_col > 0:
-			if rel_maxx == 0 and rel_minx == 0:
-				rel_maxx, rel_minx = x, x
-				#rel_maxy, rel_miny = y, y
-			else:
-				if x > rel_maxx:
-					rel_maxx = x
-	
-	diffx = rel_maxx - rel_minx
-	diffy = rel_maxy - rel_miny
-	known_dist = 0
-	
-	if diffx > diffy:
-		known_dist = diffx
-	else:
-		known_dist = diffy
-	
-	b = Button(units, text="get value", width=10, command=callback(known_dist))
-	b.pack()	
-	
+	e = Entry(units)
+	b = Button(units, text="Save size (cm)", width=10, command=callback).pack()
+	e.pack()
+	time.sleep(1)
 	mainloop()
-	#e = Entry(units, width=50)
-	#e.pack()
-
-	# Releasing capture
-	cap.release()
-	cv2.destroyAllWindows()
 	
 # Main function
 if __name__ == "__main__":
