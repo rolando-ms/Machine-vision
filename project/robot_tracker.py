@@ -1226,6 +1226,7 @@ def thres_adj():
 
 	# Creating window
 	cv2.namedWindow('sliders')
+	cv2.resizeWindow('sliders', 300, 300)
 
 	# create trackbars for color change
 	cv2.createTrackbar('Hmin','sliders',0,179,nothing)
@@ -1238,6 +1239,7 @@ def thres_adj():
 	
 	# Creating window
 	cv2.namedWindow('save data')
+	cv2.resizeWindow('save data', 300, 150)
 	#saving = '0 : Nothing \n1 : Save'
 	cv2.createTrackbar('save','save data',0,1,nothing)
 	#colors_used = '0 : red2 \n1 : red3 \n2 : green \n3 : blue \n4 : yellow '
