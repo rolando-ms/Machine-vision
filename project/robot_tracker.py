@@ -72,6 +72,10 @@ class default:
 	colors_used = ['red2\n','red3\n','green\n','blue\n','yellow\n']
 	
 	cam_num = 0
+	
+	x = 0
+	
+	y = 0
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -847,13 +851,25 @@ opening_yellow):
 	
 	return yellow_colours
 	
+# Mouse callback module for end point. It just draws a circle
+def end_point(event,x,y,flags,param):
+	if event == cv2.EVENT_LBUTTONDBLCLK:
+		default.x = x
+		default.y = y
+		#print flags
+		#print param
+		#cv2.circle(param,(x,y),20,(255,0,0),1)
+		
 def robot_detection():
 	# Connecting pc with NXT robot via bluetooth 
 	#brick = nxt.locator.find_one_brick(name = 'NXT1')
 	#robot = Robot(brick)
 	
 	# Bluetooth connection with arduino
-	ser = serial.Serial(12, 9600, timeout = 1)
+	#ser = serial.Serial(12, 9600, timeout = 0)
+	
+	# Bluetooth connection with e puck
+	#ser = serial.Serial(9, 115200, timeout = 0)
 	
 	# Getting thresholds from file
 	try:
@@ -869,6 +885,9 @@ def robot_detection():
 	
 	# Choosing camera to work with
 	cap = cv2.VideoCapture(default.cam_num)
+	
+	cv2.namedWindow('center of mass')
+	
 	
 	while(True):
 		# Reading capture from chosen camera
@@ -1150,14 +1169,27 @@ def robot_detection():
 			time = (e2 - e1) / cv2.getTickFrequency()
 			print time - timez
 			timez = time
+			
+			# Event handler in img2 (result image)
+			cv2.setMouseCallback('center of mass', end_point)
+			if (default.x != 0) and (default.y != 0):
+				cv2.circle(img2,(default.x,default.y),10,(255,255,0),1)
+			
 			# Showing result image
 			cv2.imshow('center of mass',img2)
 			#cv2.waitKey(0)
 			# Press "q" (quit) to exit
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
-			
-			ser.write(str(colors[1]._orientation)+'\n')
+			'''
+			# Storing data into string (x1,y1,angle,x2,y2)
+			string = str(colors[1]._center_mass[1]) + ' ' + \
+			str(colors[1]._center_mass[0]) + ' ' + \
+			str(colors[1]._orientation) + ' ' + \
+			str(100) + ' ' + str(200)
+			#ser.write(str(colors[1]._orientation)+'\n')
+			ser.write(string)
+			'''
 			'''
 			# Moving robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
@@ -1168,7 +1200,7 @@ def robot_detection():
 				m_right.turn(-100, 90)
 			'''
 	
-	ser.close()	# Closing serial communication
+	#ser.close()	# Closing serial communication
 	cap.release() # Releasing capture
 	cv2.destroyAllWindows()
 
