@@ -869,7 +869,7 @@ def robot_detection():
 	#ser = serial.Serial(12, 9600, timeout = 0)
 	
 	# Bluetooth connection with e puck
-	#ser = serial.Serial(9, 115200, timeout = 0)
+	ser = serial.Serial(9, 115200, timeout = 0)
 	
 	# Getting thresholds from file
 	try:
@@ -1181,15 +1181,15 @@ def robot_detection():
 			# Press "q" (quit) to exit
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
-			'''
+			
 			# Storing data into string (x1,y1,angle,x2,y2)
-			string = str(colors[1]._center_mass[1]) + ' ' + \
-			str(colors[1]._center_mass[0]) + ' ' + \
-			str(colors[1]._orientation) + ' ' + \
-			str(100) + ' ' + str(200)
+			string = str(colors[0]._center_mass[1]) + ' ' + \
+			str(height - colors[0]._center_mass[0]) + ' ' + \
+			str(colors[0]._orientation) + ' ' + \
+			str(default.x) + ' ' + str(height - default.y)
 			#ser.write(str(colors[1]._orientation)+'\n')
 			ser.write(string)
-			'''
+			
 			'''
 			# Moving robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
@@ -1199,8 +1199,10 @@ def robot_detection():
 				m_right = Motor(brick, PORT_B)
 				m_right.turn(-100, 90)
 			'''
-	
-	#ser.close()	# Closing serial communication
+	# Resetting global variables
+	default.x = 0
+	default.y = 0
+	ser.close()	# Closing serial communication
 	cap.release() # Releasing capture
 	cv2.destroyAllWindows()
 
