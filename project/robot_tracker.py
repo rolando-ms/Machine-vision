@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------
 # "Robot Tracker"
-# Author: Rolando Morales 	Date: 17/04/2014
+# Author: Rolando Morales 	Date: 29/06/2014
 #
 # Description: Script with the main purpose of controlling mobile robots
 # with a camera. There are also another functionalities to ease this
@@ -19,11 +19,16 @@
 #	* show_hsv_binary.- This module shows the binary images of all 
 #						colors after binarization.
 #
+#	* units_selection.- This module calls a thread along with thres_adj
+#						and it is used to select the size in cm of a 
+#						known circle. It has to be detected manually.
+#
 # This script was designed and tested with the following libraries:
 #	- Python 2.7.5
 #	- OpenCV 2.4.10
 #	- Numpy 1.9.0
-#	- nxt-python 2.2.2
+#	- Pyserial 2.7
+#	- nxt-python 2.2.2 (Tests with LEGO mindstorms)
 #	- math (included in python)
 #	- Tkinter (included in python)
 #----------------------------------------------------------------------
@@ -31,14 +36,13 @@ import cv2					# For image preprocessing and printing
 import numpy as np			# Requirement for OpenCV
 import math					# To calculate data
 import time
-import nxt.locator			# Tests with NXT
-from nxt.motor import *		# Tests with NXT
+#import nxt.locator			# Tests with NXT
+#from nxt.motor import *		# Tests with NXT
 from Tkinter import *		# To make the GUI
-from nxt.motor import Motor, PORT_B, PORT_C	# Distance tests with NXT
-from nxt.sensor import Ultrasonic, PORT_4	# Distance tests with NXT
+#from nxt.motor import Motor, PORT_B, PORT_C	# Distance tests with NXT
+#from nxt.sensor import Ultrasonic, PORT_4	# Distance tests with NXT
 import serial
 from threading import Thread
-import time
 
 # This class includes all the needed data of a detected object.
 class circle_data:
@@ -73,36 +77,43 @@ class default:
 	
 	cam_num = 0
 	
-	x = 0
+	x = 0	# x coordinate of end point
 	
-	y = 0
+	y = 0	# y coordinate of end point
+	
+	multiple = 0.5	# Size of processing image from original
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
-def assignment(colour,minx, miny, maxx, maxy, pix_number, cumulative_x, cumulative_y):
-	colour._minx = minx
-	colour._miny = miny
-	colour._maxx = maxx
-	colour._maxy = maxy
+def assignment(colour,minx, miny, maxx, maxy, pix_number, cumulative_x, cumulative_y, yellow):
+	colour._minx = minx * (int(1/default.multiple))
+	colour._miny = miny * (int(1/default.multiple))
+	colour._maxx = maxx * (int(1/default.multiple))
+	colour._maxy = maxy * (int(1/default.multiple))
 	colour._pix_number = pix_number
 	#colour._center_mass = center_of_mass
 	colour._cumulative_x = cumulative_x
 	colour._cumulative_y = cumulative_y
 	if cumulative_x == 0 or cumulative_y == 0:
 		colour._center_mass = [0, 0]
+	elif yellow == 0:
+		colour._center_mass = [(cumulative_x/pix_number) * (int(1/default.multiple)),\
+		(cumulative_y/pix_number) * (int(1/default.multiple))]
 	else:
-		colour._center_mass = [cumulative_x/pix_number, cumulative_y/pix_number]
+		colour._center_mass = [(cumulative_x/pix_number) * (int(1/default.multiple)),\
+		(cumulative_y/pix_number) * (int(1/default.multiple))]
 	return colour		
 
 # The purpose of this module is the same as assignment, but with less
 # assignments.
 def assignment2(colour,minx, miny, maxx, maxy, pix_number, center_of_mass):
-	colour._minx = minx
-	colour._miny = miny
-	colour._maxx = maxx
-	colour._maxy = maxy
-	colour._pix_number = pix_number
-	colour._center_mass = center_of_mass
+	colour._minx = minx * (int(1/default.multiple))
+	colour._miny = miny * (int(1/default.multiple))
+	colour._maxx = maxx * (int(1/default.multiple))
+	colour._maxy = maxy * (int(1/default.multiple))
+	colour._pix_number = pix_number # * 2 *(int(1/default.multiple))
+	colour._center_mass = [center_of_mass[0] * (int(1/default.multiple)), \
+	center_of_mass[1] * (int(1/default.multiple))]
 	#colour._cumulative_x = cumulative_x
 	#colour._cumulative_y = cumulative_y
 	#colour._center_mass = [cumulative_x/pix_number, cumulative_y/pix_number]
@@ -388,17 +399,18 @@ opening_red, opening_green, opening_blue):
 				x,y,minx_blue,miny_blue,maxx_blue,maxy_blue)
 
 	# Assigning data to color structure
+	is_yellow = 0
 	# Red
 	colours[0] = assignment(colours[0], minx_red, miny_red, maxx_red, maxy_red,
-	pixels_red, cumulative_x_red, cumulative_y_red)
+	pixels_red, cumulative_x_red, cumulative_y_red, is_yellow)
 	
 	# Green
 	colours[1] = assignment(colours[1], minx_green, miny_green, maxx_green, maxy_green,
-	pixels_green, cumulative_x_green, cumulative_y_green)
+	pixels_green, cumulative_x_green, cumulative_y_green, is_yellow)
 	
 	# Blue
 	colours[2] = assignment(colours[2], minx_blue, miny_blue, maxx_blue, maxy_blue,
-	pixels_blue, cumulative_x_blue, cumulative_y_blue)
+	pixels_blue, cumulative_x_blue, cumulative_y_blue, is_yellow)
 	
 	return colours
 
@@ -643,10 +655,12 @@ rel_maxiy, opening_yellow,colours):
 		
 	for a in range(len(colours)):
 		#print data[a]
-		difx = colours[a]._maxx - colours[a]._minx
-		dify = colours[a]._maxy - colours[a]._miny
-		center = colours[a]._center_mass
-		#print center
+		difx = (colours[a]._maxx - colours[a]._minx) / (int(1/default.multiple))
+		dify = (colours[a]._maxy - colours[a]._miny) / (int(1/default.multiple))
+		# Scaling center of mass
+		center = [colours[a]._center_mass[0] / (int(1/default.multiple)),\
+		colours[a]._center_mass[1]/(int(1/default.multiple))]
+		#print 'center = '+ str(center)
 		offset = 0.1
 		multiplier = 1.5
 		rel_miniy = int(center[1] - ((multiplier + offset) * dify))
@@ -678,6 +692,7 @@ rel_maxiy, opening_yellow,colours):
 								data[a][6] = y
 		except IndexError:
 			data[a] = [0,0,0,0,0,0,0]
+			print 'error'
 	#print data
 	#print data[0]
 	pixels_1, cumulative_x_1, cumulative_y_1, minx_1, maxx_1, \
@@ -688,6 +703,7 @@ rel_maxiy, opening_yellow,colours):
 	#print data[2]
 	pixels_3, cumulative_x_3, cumulative_y_3, minx_3, maxx_3, \
 	miny_3, maxy_3 = data[2][:]
+	
 	'''
 	# Applying DFS
 	for y in range(rel_miniy, rel_maxiy):
@@ -761,17 +777,18 @@ rel_maxiy, opening_yellow,colours):
 						maxy_3 = y
 	'''
 	# Assigning data to structure
+	is_yellow = 1
 	# Yellow 1
 	yellow_colours[0] = assignment(yellow_colours[0], minx_1, miny_1, maxx_1, 
-	maxy_1, pixels_1, cumulative_x_1, cumulative_y_1)
+	maxy_1, pixels_1, cumulative_x_1, cumulative_y_1, is_yellow)
 	#print yellow_colours[1]._center_mass 
 	# Yellow 2
 	yellow_colours[1] = assignment(yellow_colours[1], minx_2, miny_2, maxx_2, 
-	maxy_2, pixels_2, cumulative_x_2, cumulative_y_2)
+	maxy_2, pixels_2, cumulative_x_2, cumulative_y_2, is_yellow)
 	#print yellow_colours[1]._center_mass 
 	# Yellow 3
 	yellow_colours[2] = assignment(yellow_colours[2], minx_3, miny_3, maxx_3, 
-	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3)
+	maxy_3, pixels_3, cumulative_x_3, cumulative_y_3, is_yellow)
 	#print yellow_colours[2]._center_mass
 	
 	return yellow_colours
@@ -869,7 +886,7 @@ def robot_detection():
 	#ser = serial.Serial(12, 9600, timeout = 0)
 	
 	# Bluetooth connection with e puck
-	ser = serial.Serial(9, 115200, timeout = 0)
+	#ser = serial.Serial(9, 115200, timeout = 0)
 	
 	# Getting thresholds from file
 	try:
@@ -891,7 +908,7 @@ def robot_detection():
 	
 	while(True):
 		# Reading capture from chosen camera
-		ret, img = cap.read()
+		ret, img_or = cap.read()
 		
 		# If it has an image
 		if(ret):
@@ -906,6 +923,8 @@ def robot_detection():
 			# Open image manually, used for tests
 			#img_name = 'pic18.png'
 			#img = cv2.imread(img_name)
+			img = cv2.resize(img_or,None,fx=default.multiple, \
+			fy=default.multiple,interpolation = cv2.INTER_LINEAR)
 			width, height,depth = img.shape
 			#print width, height
 
@@ -1040,7 +1059,7 @@ def robot_detection():
 				red_opening, green_opening, blue_opening)
 				
 			# Showing centers of mass on a new image and bounding boxes
-			img2 = img
+			img2 = img_or
 			#img2 = cv2.imread(img_name)
 			color = (0,255,0)
 			for x in range(len(colors)):
@@ -1048,6 +1067,7 @@ def robot_detection():
 				#colors[x]._maxy
 				img2[colors[x]._center_mass[0], colors[x]._center_mass[1]] = (0,255,0)
 				img2 = print_box(img2,colors[x],color)
+				#print 'color = ' + str(colors[x]._center_mass)
 			
 			# Colors structure
 			yellow_colors = []
@@ -1083,6 +1103,7 @@ def robot_detection():
 				else:
 					img2[yellow_colors[x]._center_mass[0], yellow_colors[x]._center_mass[1]] = (0,255,255)
 					img2 = print_box(img2,yellow_colors[x],color)
+					#print 'yellow = ' + str(yellow_colors[x]._center_mass)
 			
 			#cv2.imshow('center of mass',img2)
 			#cv2.waitKey(0)
@@ -1104,8 +1125,10 @@ def robot_detection():
 					distances.append(distance)
 					x_val = -yellow_colors[x]._center_mass[0] + \
 					colors[y]._center_mass[0]
-					y_val = -(height - yellow_colors[x]._center_mass[1]) + \
-					(height - colors[y]._center_mass[1])
+					y_val = -((height * (int(1/default.multiple))) - \
+					yellow_colors[x]._center_mass[1]) + \
+					((height * (int(1/default.multiple))) - \
+					colors[y]._center_mass[1])
 					xy_vals.append([x_val, y_val])
 				
 				# Choosing the minimum distance and calculating the 
@@ -1159,8 +1182,8 @@ def robot_detection():
 			#miny, maxy, minx, maxx = 0,0,0,0
 			miny = 0 + (colors[indx]._maxy - colors[indx]._miny)
 			minx = 0 + (colors[indx]._maxx - colors[indx]._minx)
-			maxy = height - (colors[indx]._maxy - colors[indx]._miny)
-			maxx = width - (colors[indx]._maxx - colors[indx]._minx)
+			maxy = (height * (int(1/default.multiple))) - (colors[indx]._maxy - colors[indx]._miny)
+			maxx = (width * (int(1/default.multiple))) - (colors[indx]._maxx - colors[indx]._minx)
 			
 			cv2.rectangle(img2,(minx,miny),(maxy,maxx),(0,0,255),1)
 			
@@ -1181,7 +1204,7 @@ def robot_detection():
 			# Press "q" (quit) to exit
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
-			
+			'''
 			# Storing data into string (x1,y1,angle,x2,y2)
 			string = str(colors[0]._center_mass[1]) + ' ' + \
 			str(height - colors[0]._center_mass[0]) + ' ' + \
@@ -1189,7 +1212,7 @@ def robot_detection():
 			str(default.x) + ' ' + str(height - default.y)
 			#ser.write(str(colors[1]._orientation)+'\n')
 			ser.write(string)
-			
+			'''
 			'''
 			# Moving robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
@@ -1202,7 +1225,7 @@ def robot_detection():
 	# Resetting global variables
 	default.x = 0
 	default.y = 0
-	ser.close()	# Closing serial communication
+	#ser.close()	# Closing serial communication
 	cap.release() # Releasing capture
 	cv2.destroyAllWindows()
 
@@ -1582,11 +1605,13 @@ if __name__ == "__main__":
 	master = Tk() # Creating master control
 	
 	# It seems that tkinter supports only gif images
-	icon=PhotoImage(file="qr.gif")
+	#icon=PhotoImage(file="qr.gif")
 	
 	# Creating buttons of master control to call the corresponding
 	# functions.
-	button_det = Button(master, compound = LEFT, image=icon, text="Start robot detection",command=robot_detection)
+	#button_det = Button(master, compound = LEFT, image=icon, text="Start robot detection",command=robot_detection)
+	#button_det.pack()
+	button_det = Button(master, text="Start robot detection",  height=3, width=50 ,command=robot_detection)
 	button_det.pack()
 	
 	button_show = Button(master, text="Show camera image",  height=3, width=50 ,command=show_cam)
@@ -1605,4 +1630,3 @@ if __name__ == "__main__":
 	#button_thres.pack()
 	
 	master.mainloop()
-	
