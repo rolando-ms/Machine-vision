@@ -78,10 +78,15 @@ class default:
 	cam_num = 0
 	
 	x = 0	# x coordinate of end point
-	
 	y = 0	# y coordinate of end point
+	xgreen = 0	# x coordinate of green end point
+	ygreen = 0	# y coordinate of green end point
+	xblue = 0	# x coordinate of green end point
+	yblue = 0	# y coordinate of green end point
 	
 	multiple = 0.5	# Size of processing image from original
+	
+	pixels_cm = 10 # Conversion value
 
 # This module assigns the gathered data to the corresponding variable.
 # It is used to make few module calls.
@@ -869,10 +874,15 @@ opening_yellow):
 	return yellow_colours
 	
 # Mouse callback module for end point. It just draws a circle
+# It has too positions offsets for the other robots.
 def end_point(event,x,y,flags,param):
 	if event == cv2.EVENT_LBUTTONDBLCLK:
 		default.x = x
 		default.y = y
+		default.xgreen = x - 100
+		default.ygreen = y - 50
+		default.xblue = x + 100
+		default.yblue = y - 50
 		#print flags
 		#print param
 		#cv2.circle(param,(x,y),20,(255,0,0),1)
@@ -886,15 +896,34 @@ def robot_detection():
 	#ser = serial.Serial(12, 9600, timeout = 0)
 	
 	# Bluetooth connection with e puck
-	#ser = serial.Serial(9, 115200, timeout = 0)
+	ser = serial.Serial(9, 115200, timeout = 0)		# Red
+	ser2 = serial.Serial(14, 115200, timeout = 0)	# Green
+	ser3 = serial.Serial(17, 115200, timeout = 0)	# Blue
 	
 	# Getting thresholds from file
 	try:
 		file = open(default.file_name, 'r')
 		thr = read_thres(file)
 	except IOError, ErrorValue:
-		print 'File not found or corrupted. Using defaults.'
+		print 'File not found or corrupted. Using threshold defaults.'
 		thr = default.def_vals
+	
+	# Getting conversion units from file
+	try:
+		file = open(default.file_name, 'r')
+		pix_cm = int(read_units(file,3))		# Reading pix/cm
+	except IOError, ErrorValue:
+		print 'File not found or corrupted. Using default conversion value.'
+		pix_cm = default.pixels_cm
+	
+	#print_count = 1
+	# Initializing time variables
+	pretimemax, pretimemin, meanpretime = 0, 0, 0
+	protimemax, protimemin, meanprotime = 0, 0, 0
+	totalpromax, totalpromin, meantotalpro = 0, 0, 0
+	timeser1max, timeser1min, meantimeser = 0, 0, 0
+	timestrmax, timestrmin, meantimestr = 0, 0, 0
+	totalsermax, totalsermin, meantotalser = 0, 0, 0
 	
 	timez = 0
 	# Starting time counter to measure elapsed time
@@ -920,14 +949,20 @@ def robot_detection():
 			for x in range(bot_num):
 				colors.append(circle_data())
 			
+			# For total processing time
+			e3 = cv2.getTickCount()
+			
 			# Open image manually, used for tests
 			#img_name = 'pic18.png'
 			#img = cv2.imread(img_name)
 			img = cv2.resize(img_or,None,fx=default.multiple, \
 			fy=default.multiple,interpolation = cv2.INTER_LINEAR)
-			width, height,depth = img.shape
+			width, height, depth = img.shape
 			#print width, height
 
+			# Preprocessing time
+			t5 = cv2.getTickCount()
+			
 			# RGB to HSV transformation
 			hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -1013,6 +1048,9 @@ def robot_detection():
 			cv2.imshow('global open', color_glb_opening)
 			cv2.waitKey(0)
 			'''
+			
+			# End of processing time
+			t6 = cv2.getTickCount()
 			
 			# Getting max and min relative values for further 
 			# image processing. Instead of scanning the whole image,
@@ -1108,6 +1146,11 @@ def robot_detection():
 			#cv2.imshow('center of mass',img2)
 			#cv2.waitKey(0)
 			
+			#*********************************
+			# Restoring original image size
+			width, height, depth = img2.shape
+			#*********************************
+			
 			# Choosing which yellow color corresponds to which color(
 			# red, green, blue) and calculating orientation
 			font = cv2.FONT_HERSHEY_SIMPLEX # Font used to write on result image
@@ -1125,10 +1168,12 @@ def robot_detection():
 					distances.append(distance)
 					x_val = -yellow_colors[x]._center_mass[0] + \
 					colors[y]._center_mass[0]
-					y_val = -((height * (int(1/default.multiple))) - \
-					yellow_colors[x]._center_mass[1]) + \
-					((height * (int(1/default.multiple))) - \
-					colors[y]._center_mass[1])
+					y_val = -((height) - yellow_colors[x]._center_mass[1]) + \
+					((height) - colors[y]._center_mass[1])
+					#y_val = -((height * (int(1/default.multiple))) - \
+					#yellow_colors[x]._center_mass[1]) + \
+					#((height * (int(1/default.multiple))) - \
+					#colors[y]._center_mass[1])
 					xy_vals.append([x_val, y_val])
 				
 				# Choosing the minimum distance and calculating the 
@@ -1152,7 +1197,7 @@ def robot_detection():
 						colors[z]._orientation = int(angle_deg)
 						(a, b) = colors[z]._center_mass
 						# Printing angle as a string on image
-						if distances[z] <= 50:
+						if distances[z] <= 30:
 							cv2.putText(img2,str(int(angle_deg)),(b,a),font,0.75,
 							(255,255,255),1)
 						else:
@@ -1162,12 +1207,22 @@ def robot_detection():
 			row = 35
 			farben = ['R = ', 'G = ', 'B = ']
 			# Printing positions (in pixels) on image (row, column)
+			
 			for x in range(len(colors)):
 				cv2.putText(img2,farben[x] + str(colors[x]._center_mass),(15,row),font,0.75,
 								(255,255,255),1)
 				row += 20
-				
-				
+			
+			#print (width * (int(1/default.multiple)))
+			'''
+			for x in range(len(colors)):
+				#if 
+				b = (colors[x]._center_mass[0] - (height * (int(1/default.multiple)))) / float(default.pixels_cm) # y coordinate
+				a = (colors[x]._center_mass[1]) / float(default.pixels_cm)	# x coordinate
+				cv2.putText(img2,farben[x] + '[' + str(a) + ' cm,' + str(b) + ' cm]',(15,row),font,0.75,
+								(255,255,255),1)
+				row += 20
+			'''
 			# Printing boundaries by getting biggest area
 			#areas = []
 			#area = 0
@@ -1182,21 +1237,23 @@ def robot_detection():
 			#miny, maxy, minx, maxx = 0,0,0,0
 			miny = 0 + (colors[indx]._maxy - colors[indx]._miny)
 			minx = 0 + (colors[indx]._maxx - colors[indx]._minx)
-			maxy = (height * (int(1/default.multiple))) - (colors[indx]._maxy - colors[indx]._miny)
-			maxx = (width * (int(1/default.multiple))) - (colors[indx]._maxx - colors[indx]._minx)
+			maxy = (height) - (colors[indx]._maxy - colors[indx]._miny)
+			maxx = (width) - (colors[indx]._maxx - colors[indx]._minx)
 			
 			cv2.rectangle(img2,(minx,miny),(maxy,maxx),(0,0,255),1)
 			
 			e2 = cv2.getTickCount() # Getting time after processing
 			# Calculating elapsed time
 			time = (e2 - e1) / cv2.getTickFrequency()
-			print time - timez
+			#print time - timez
 			timez = time
 			
 			# Event handler in img2 (result image)
 			cv2.setMouseCallback('center of mass', end_point)
 			if (default.x != 0) and (default.y != 0):
 				cv2.circle(img2,(default.x,default.y),10,(255,255,0),1)
+				cv2.circle(img2,(default.xgreen,default.ygreen),10,(255,255,0),1)
+				cv2.circle(img2,(default.xblue,default.yblue),10,(255,255,0),1)
 			
 			# Showing result image
 			cv2.imshow('center of mass',img2)
@@ -1204,17 +1261,156 @@ def robot_detection():
 			# Press "q" (quit) to exit
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
-			'''
+			#print (width - colors[0]._center_mass[0])
+			
+			t3 = cv2.getTickCount()
 			# Storing data into string (x1,y1,angle,x2,y2)
 			string = str(colors[0]._center_mass[1]) + ' ' + \
-			str(height - colors[0]._center_mass[0]) + ' ' + \
+			str(width - colors[0]._center_mass[0]) + ' ' + \
 			str(colors[0]._orientation) + ' ' + \
-			str(default.x) + ' ' + str(height - default.y)
-			#ser.write(str(colors[1]._orientation)+'\n')
+			str(default.x) + ' ' + str(width - default.y)
+			#ser.write(str(colors[1]._orientation)+'\n') # Servo write
+			t1 = cv2.getTickCount()
 			ser.write(string)
+			t2 = cv2.getTickCount()
+			time2 = (t2 - t1) / cv2.getTickFrequency()
+			#print 'time serial = ' + str(time2)
+			
+			string2 = str(colors[1]._center_mass[1]) + ' ' + \
+			str(width - colors[1]._center_mass[0]) + ' ' + \
+			str(colors[1]._orientation) + ' ' + \
+			str(default.xgreen) + ' ' + str(width - default.ygreen)
+			ser2.write(string2)
+			
+			string3 = str(colors[2]._center_mass[1]) + ' ' + \
+			str(width - colors[2]._center_mass[0]) + ' ' + \
+			str(colors[2]._orientation) + ' ' + \
+			str(default.xblue) + ' ' + str(width - default.yblue)
+			ser3.write(string3)
+			
+			# Uncomment next lines to measure time in 20 frames
+			# to see he performance
 			'''
+			t4 = cv2.getTickCount()
+			# Total send time
+			time3 = (t4 - t3) / cv2.getTickFrequency()
+			#print 'time serial = ' + str(time3)
+			
+			# Build string time
+			time4 = (t1 - t3) / cv2.getTickFrequency()
+			
+			# Preprocessing time
+			time5 = (t6 - t5) / cv2.getTickFrequency()
+			
+			# Image processing time
+			time6 = (e2 - t6) / cv2.getTickFrequency()
+			
+			# Image processing time
+			time7 = (e2 - e3) / cv2.getTickFrequency()
+			
+			# Time information for benchmarking
+			# Preprocessing (max and min)
+			if pretimemax == 0:
+				pretimemin = time5
+				pretimemax = time5
+			else:
+				if pretimemax < time5:
+					pretimemax = time5
+				if pretimemin > time5:
+					pretimemin = time5
+			meanpretime += time5
+			
+			# Image processing (max and min)
+			if protimemax == 0:
+				protimemax = time6
+				protimemin = time6
+			else:
+				if protimemax < time6:
+					protimemax = time6
+				if protimemin > time6:
+					protimemin = time6
+			meanprotime += time6
+			
+			# Total image processing (max and min)
+			if totalpromax == 0:
+				totalpromax = time7
+				totalpromin = time7
+			else:
+				if totalpromax < time7:
+					totalpromax = time7
+				if totalpromin > time7:
+					totalpromin = time7
+			meantotalpro += time7
+			
+			# Data communication of first robot (max and min)
+			if timeser1max == 0:
+				timeser1max = time2
+				timeser1min = time2
+			else:
+				if timeser1max < time2:
+					timeser1max = time2
+				if timeser1min > time2:
+					timeser1min = time2
+			meantimeser += time2
+			
+			# Time of building a string to send (max and min)
+			if timestrmax == 0:
+				timestrmax = time4
+				timestrmin = time4
+			else:
+				if timestrmax < time4:
+					timestrmax = time4
+				if timestrmin > time4:
+					timestrmin = time4
+			meantimestr += time4
+					
+			# Total send time (max and min)
+			if totalsermax == 0:
+				totalsermax = time3
+				totalsermin = time3
+			else:
+				if totalsermax < time3:
+					totalsermax = time3
+				if totalsermin > time3:
+					totalesermin = time3
+			meantotalser += time3
+					
+			# Printing time information for benchmarking
+			if print_count == 20:
+				print '*********************************************'
+				print 'Max preprocessing time = ' + str(pretimemax)
+				print 'Min preprocessing time = ' + str(pretimemin)
+				print 'Preprocessing time = ' + str(meanpretime/20)
+				
+				print 'Max processing time = ' + str(protimemax)
+				print 'Min processing time = ' + str(protimemin)
+				print 'Mean processing time = ' + str(meanprotime/20)
+				
+				print 'Max total processing time = ' + str(totalpromax)
+				print 'Min total processing time = ' + str(totalpromin)
+				print 'Mean total processing time = ' + str(meantotalpro/20)
+				
+				print 'Max send time (1 robot) = ' + str(timeser1max)
+				print 'Min send time (1 robot) = ' + str(timeser1min)
+				print 'Mean time serial (1 sent) = ' + str(meantimeser/20)
+				
+				print 'Max build string time = ' + str(timestrmax)
+				print 'Min build string time = ' + str(timestrmin)
+				print 'Mean time serial (build string) = ' + str(meantimestr/20)
+				
+				print 'Max total send time = ' + str(totalsermax)
+				print 'Min total send time = ' + str(totalsermin)
+				print 'Mean time serial (total) = ' + str(meantotalser/20)
+				
+				print '\nTotal time of this run = ' + str(time)
+				print '*********************************************'
+				break
+			
+			print_count += 1
 			'''
-			# Moving robot according to the detected angle
+			
+			'''
+			# Moving LEGO robot according to the detected angle
 			if colors[1]._orientation >= 0 and colors[1]._orientation <= 100:
 				m_left = Motor(brick, PORT_B)
 				m_left.turn(100, 90)
@@ -1225,7 +1421,13 @@ def robot_detection():
 	# Resetting global variables
 	default.x = 0
 	default.y = 0
-	#ser.close()	# Closing serial communication
+	default.xgreen = 0
+	default.ygreen = 0
+	default.xblue = 0
+	default.yblue = 0
+	ser.close()	# Closing serial communication
+	ser2.close()
+	ser3.close()
 	cap.release() # Releasing capture
 	cv2.destroyAllWindows()
 
@@ -1546,7 +1748,7 @@ def read_units(file1,num):
 
 	for x in range(len(lines)):
 		if lines[x] == unit:
-			unit_val = int(lines[x+num])
+			unit_val = float(lines[x+num])
 			break
 		
 	return unit_val
@@ -1584,7 +1786,7 @@ def units_selection():
 			print 'Size in centimeters overwritten.'
 			# Updating pixels/cm
 			file = open(default.file_name, 'r')
-			pix = read_units(file,1)
+			pix = int(read_units(file,1))
 			pix_cm = pix/float(val)
 			file = open(default.file_name, 'r')
 			write_units(file,pix_cm,3)
